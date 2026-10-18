@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tandemonium Steam Playtest</title>
+  <meta name="description" content="Tandemonium Steam Playtest — access is rolling out in batches. Join the Discord, find a friend, and come ride with us.">
+  <meta property="og:title" content="Tandemonium Steam Playtest">
+  <meta property="og:description" content="Playtest access is rolling out in batches. Join the Discord and come ride with us.">
+  <meta property="og:image" content="../images/game/hero_graphic.png">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/svg+xml" href="../images/logos/housetandem-icon.svg">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/house-tandem.css">
+  <style>
+    .playtest-hero {
+      padding-top: calc(var(--nav-height) + 4rem);
+      padding-bottom: 3rem;
+      text-align: center;
+    }
+
+    .playtest-hero h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .playtest-hero .steam-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: linear-gradient(135deg, #1b2838, #2a475e);
+      border: 1px solid #3d6c8e;
+      border-radius: 12px;
+      padding: 0.75rem 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .playtest-hero .steam-badge .steam-logo {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+    }
+
+    .playtest-hero .steam-badge span {
+      color: #c6d4df;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .playtest-hero .tagline {
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+    }
+
+    .steam-store-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: linear-gradient(135deg, #1b2838, #2a475e);
+      color: #c6d4df;
+      padding: 0.85rem 2rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: all 0.25s;
+      border: 1px solid #3d6c8e;
+    }
+
+    .steam-store-btn:hover {
+      background: linear-gradient(135deg, #2a475e, #3d6c8e);
+      color: #fff;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(27, 40, 56, 0.5);
+    }
+
+    .steam-store-btn .steam-logo {
+      width: 22px;
+      height: 22px;
+    }
+
+    .playtest-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2.5rem;
+      max-width: 640px;
+      margin: 0 auto 2rem;
+      text-align: left;
+    }
+
+    .playtest-card h2 {
+      font-size: 1.3rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .playtest-card p,
+    .playtest-card ul {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+
+    .playtest-card ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .playtest-card ul li {
+      padding-left: 1.5rem;
+      position: relative;
+      margin-bottom: 0.5rem;
+    }
+
+    .playtest-card ul li::before {
+      content: "\2022";
+      color: var(--accent-green);
+      position: absolute;
+      left: 0.25rem;
+    }
+
+    .playtest-card .pointer {
+      color: var(--text-primary);
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    .discord-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: #5865F2;
+      color: #fff;
+      padding: 0.85rem 2rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: all 0.25s;
+      margin-top: 0.5rem;
+    }
+
+    .discord-btn:hover {
+      background: #4752c4;
+      color: #fff;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(88, 101, 242, 0.3);
+    }
+
+    .closing {
+      text-align: center;
+      max-width: 640px;
+      margin: 0 auto;
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      padding-bottom: 2rem;
+    }
+
+    .channels {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 0.75rem;
+    }
+
+    .channel-tag {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      padding: 0.3rem 0.85rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo">
+        <span class="wordmark">House <b>Tandem</b></span>
+      </a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../about.html">About</a></li>
+        <li><a href="../support.html">Support</a></li>
+        <li><a href="../press.html">Press</a></li>
+        <li><a href="../privacy.html">Privacy</a></li>
+        <li><a href="../tos.html">Terms</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <section class="playtest-hero container">
+    <div class="fade-in">
+      <div class="steam-badge">
+        <svg class="steam-logo" viewBox="0 0 256 259" xmlns="http://www.w3.org/2000/svg">
+          <path d="M127.779 0C60.21 0 5.2 52.365.592 119.105l68.51 28.724c5.8-4.028 12.834-6.393 20.418-6.393.664 0 1.321.017 1.97.054l30.575-44.932v-.63c0-26.514 21.276-48.084 47.434-48.084 26.157 0 47.433 21.57 47.433 48.098 0 26.528-21.276 48.098-47.433 48.098h-1.098l-43.758 31.68c0 .527.034 1.06.034 1.593 0 19.892-15.94 36.057-35.563 36.057-17.2 0-31.563-12.333-34.92-28.85L4.554 159.27C21.174 216.242 73.019 258.56 134.552 258.56c75.382 0 121.449-61.45 121.449-129.278C256.001 57.86 198.775 0 127.779 0" fill="#c6d4df"/>
+          <path d="M81.322 209.093l-15.6-6.538c2.782 5.842 7.61 10.72 13.903 13.476 13.62 5.963 29.47-.225 35.375-13.81 2.86-6.588 2.9-13.845.11-20.47-2.79-6.618-7.992-11.768-14.637-14.65-6.584-2.847-13.522-2.78-19.69-.453l16.14 6.77c10.053 4.2 14.8 15.768 10.587 25.808-4.213 10.04-15.81 14.768-25.87 10.554l.282-.687z" fill="#1b2838"/>
+          <path d="M218.054 143.942c0-17.676-14.183-32.048-31.644-32.048-17.46 0-31.643 14.372-31.643 32.048 0 17.677 14.183 32.048 31.643 32.048 17.461 0 31.644-14.371 31.644-32.048zm-55.192.048c0-13.3 10.577-24.094 23.596-24.094 13.02 0 23.597 10.794 23.597 24.094 0 13.3-10.577 24.094-23.597 24.094-13.019 0-23.596-10.794-23.596-24.094z" fill="#1b2838"/>
+        </svg>
+        <span>Steam Playtest</span>
+      </div>
+      <h1>Tandemonium Steam Playtest</h1>
+      <p class="tagline">Access is rolling out in batches!</p>
+      <a href="https://store.steampowered.com/app/4482940/Tandemonium/" class="steam-store-btn">
+        <svg class="steam-logo" viewBox="0 0 256 259" xmlns="http://www.w3.org/2000/svg">
+          <path d="M127.779 0C60.21 0 5.2 52.365.592 119.105l68.51 28.724c5.8-4.028 12.834-6.393 20.418-6.393.664 0 1.321.017 1.97.054l30.575-44.932v-.63c0-26.514 21.276-48.084 47.434-48.084 26.157 0 47.433 21.57 47.433 48.098 0 26.528-21.276 48.098-47.433 48.098h-1.098l-43.758 31.68c0 .527.034 1.06.034 1.593 0 19.892-15.94 36.057-35.563 36.057-17.2 0-31.563-12.333-34.92-28.85L4.554 159.27C21.174 216.242 73.019 258.56 134.552 258.56c75.382 0 121.449-61.45 121.449-129.278C256.001 57.86 198.775 0 127.779 0" fill="currentColor"/>
+          <path d="M81.322 209.093l-15.6-6.538c2.782 5.842 7.61 10.72 13.903 13.476 13.62 5.963 29.47-.225 35.375-13.81 2.86-6.588 2.9-13.845.11-20.47-2.79-6.618-7.992-11.768-14.637-14.65-6.584-2.847-13.522-2.78-19.69-.453l16.14 6.77c10.053 4.2 14.8 15.768 10.587 25.808-4.213 10.04-15.81 14.768-25.87 10.554l.282-.687z" fill="#0a0a0f"/>
+          <path d="M218.054 143.942c0-17.676-14.183-32.048-31.644-32.048-17.46 0-31.643 14.372-31.643 32.048 0 17.677 14.183 32.048 31.643 32.048 17.461 0 31.644-14.371 31.644-32.048zm-55.192.048c0-13.3 10.577-24.094 23.596-24.094 13.02 0 23.597 10.794 23.597 24.094 0 13.3-10.577 24.094-23.597 24.094-13.019 0-23.596-10.794-23.596-24.094z" fill="#0a0a0f"/>
+        </svg>
+        Request Access on Steam
+      </a>
+    </div>
+  </section>
+
+  <section class="container" style="padding-top: 0;">
+    <div class="playtest-card fade-in">
+      <p>If you've requested access, keep an eye out &mdash; we're starting to invite players.</p>
+
+      <span class="pointer">&#x1F3AE; This is a multiplayer party game &mdash; best played with a friend.</span>
+
+      <span class="pointer">&#x1F449; You can invite up to 3 friends once you have access</span>
+
+      <h2>&#x1F449; Join our Discord to:</h2>
+      <ul>
+        <li>Find someone to play with</li>
+        <li>Coordinate sessions</li>
+        <li>Share feedback directly</li>
+      </ul>
+
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Look for the <strong style="color: var(--text-secondary);">usersfirst-games</strong> category, and the channels:</p>
+      <div class="channels">
+        <span class="channel-tag">#tandemonium</span>
+        <span class="channel-tag">#feedback</span>
+      </div>
+
+      <div style="text-align: center; margin-top: 2rem;">
+        <a href="https://discord.gg/ZxqPT2JP" class="discord-btn">
+          <svg width="20" height="16" viewBox="0 0 71 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M60.1 4.9A58.5 58.5 0 0045.4.2a.2.2 0 00-.2.1 40.8 40.8 0 00-1.8 3.7 54 54 0 00-16.2 0A37.3 37.3 0 0025.4.3a.2.2 0 00-.2-.1A58.4 58.4 0 0010.5 5a.2.2 0 00-.1 0A60 60 0 00.4 45.3a.3.3 0 000 .2A58.7 58.7 0 0018.1 55a.2.2 0 00.3-.1 42 42 0 003.6-5.9.2.2 0 00-.1-.3 38.8 38.8 0 01-5.5-2.6.2.2 0 01 0-.4l1.1-.9a.2.2 0 01.2 0 41.9 41.9 0 0035.6 0 .2.2 0 01.3 0l1 .9a.2.2 0 010 .3 36.4 36.4 0 01-5.5 2.7.2.2 0 00-.1.3 47.2 47.2 0 003.6 5.8.2.2 0 00.3.1A58.5 58.5 0 0070.6 45.5a.2.2 0 000-.2A59.7 59.7 0 0060.1 5a.2.2 0 000 0zM23.7 37.3c-3.5 0-6.4-3.2-6.4-7.1s2.8-7.2 6.4-7.2 6.5 3.2 6.4 7.2c0 3.9-2.8 7.1-6.4 7.1zm23.6 0c-3.5 0-6.4-3.2-6.4-7.1s2.8-7.2 6.4-7.2 6.5 3.2 6.4 7.2c0 3.9-2.8 7.1-6.4 7.1z" fill="currentColor"/>
+          </svg>
+          Join GDG Columbus Discord
+        </a>
+      </div>
+    </div>
+
+    <p class="closing fade-in">
+      We're actively playing and excited to hear what you think &mdash; come ride with us! &#x1F6B2;
+    </p>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-logo">
+          <span class="wordmark">House <b>Tandem</b></span>
+        </div>
+        <p class="footer-text">&copy; 2026 Users First, LLC. All rights reserved.</p>
+        <ul class="footer-links">
+          <li><a href="../privacy.html">Privacy</a></li>
+          <li><a href="../tos.html">Terms</a></li>
+          <li><a href="../support.html">Support</a></li>
+          <li><a href="../press.html">Press</a></li>
+        </ul>
+      </div>
+      <p class="footer-colophon" title="Psalm 150 — Praise the LORD! Praise God in his sanctuary; praise him in his mighty heavens! Praise him for his mighty deeds; praise him according to his excellent greatness! Praise him with trumpet sound; praise him with lute and harp! Praise him with tambourine and dance; praise him with strings and pipe! Praise him with sounding cymbals; praise him with loud clashing cymbals! Let everything that has breath praise the LORD! Praise the LORD!">Ps. 150</p>
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>
