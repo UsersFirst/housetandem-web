@@ -25,4 +25,4 @@ npx serve .
 
 ## Deploy
 
-It's served by GitHub Pages from `main`. The custom domain (`housetandem.com`) isn't attached yet; see the company plan issue.
+It's served by GitHub Pages from `main` at housetandem.com (`CNAME` file). DNS is on Cloudflare: four A records to GitHub's Pages IPs plus `www` → `usersfirst.github.io`.
