@@ -77,3 +77,11 @@
 .nav-logo .brand-lockup { height: 30px; width: auto; }
 .footer-logo .brand-lockup { height: 24px; width: auto; }
 .press-svg { text-align: center; margin-top: 1.5rem; color: var(--text-secondary); line-height: 2; }
+.game-card-icon {
+  aspect-ratio: 16 / 9;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(46, 243, 60, 0.10), transparent 70%), var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+.game-card-icon img { width: 52%; height: auto; }
+#games { padding-bottom: 5rem; }
