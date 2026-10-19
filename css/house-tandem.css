@@ -61,3 +61,16 @@
 
 .game-card-body h3 .game-logo { aspect-ratio: auto; object-fit: contain; width: min(320px, 100%); height: auto; margin: -0.5rem 0 0.25rem -0.5rem; }
 .press-card-image img { object-fit: contain; }
+
+/* Brand logo (header, footer, hero) */
+.nav-logo, .footer-logo { display: flex; align-items: center; gap: 0.6rem; }
+.nav-logo img, .footer-logo img { filter: none; opacity: 1; width: auto; }
+.nav-logo .brand-mark { height: 34px; }
+.nav-logo .brand-word { height: 15px; }
+.footer-logo .brand-mark { height: 26px; }
+.footer-logo .brand-word { height: 12px; }
+.hero-logo { margin: 0 auto 0.75rem; }
+.hero-logo img { width: min(560px, 86vw); height: auto; margin: 0 auto; }
+@media (max-width: 420px) { .nav-logo .brand-word { height: 12px; } .nav-logo .brand-mark { height: 28px; } }
+
+.about-logo { filter: none !important; opacity: 1 !important; height: auto; }
