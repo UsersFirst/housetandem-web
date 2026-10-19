@@ -74,3 +74,6 @@
 @media (max-width: 420px) { .nav-logo .brand-word { height: 12px; } .nav-logo .brand-mark { height: 28px; } }
 
 .about-logo { filter: none !important; opacity: 1 !important; height: auto; }
+.nav-logo .brand-lockup { height: 30px; width: auto; }
+.footer-logo .brand-lockup { height: 24px; width: auto; }
+.press-svg { text-align: center; margin-top: 1.5rem; color: var(--text-secondary); line-height: 2; }

@@ -26,3 +26,7 @@ npx serve .
 ## Deploy
 
 It's served by GitHub Pages from `main` at housetandem.com (`CNAME` file). DNS is on Cloudflare: four A records to GitHub's Pages IPs plus `www` → `usersfirst.github.io`.
+
+## Logo files
+
+`images/logos/` has the House Tandem logo as SVG (traced) and PNG. The SVGs were traced from Pete's raster logo with `tools/trace.js`, one colour mask per brand colour, with "TANDEM" filled by a gradient. `tools/build.js` then assembles the variants: full, light, dark, mark, square icon, favicon, wordmark and horizontal lockup. To re-run them, `npm i potrace@2.1.8` in a scratch folder and see the comments in the scripts.
