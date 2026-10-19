@@ -39,7 +39,7 @@
   background: var(--bg-card-hover);
   color: var(--text-primary);
 }
-.game-card img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.game-card > img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
 .game-card-body { padding: 1.25rem 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
 .game-card-body h3 { font-size: 1.25rem; }
 .game-card-body p { color: var(--text-secondary); font-size: 0.95rem; flex: 1; }
@@ -54,7 +54,10 @@
 .game-card.featured { grid-column: 1 / -1; }
 @media (min-width: 900px) {
   .game-card.featured { flex-direction: row; }
-  .game-card.featured img { width: 58%; aspect-ratio: auto; }
+  .game-card.featured > img { width: 58%; aspect-ratio: auto; }
   .game-card.featured .game-card-body { padding: 2rem; justify-content: center; }
   .game-card.featured h3 { font-size: 2rem; }
 }
+
+.game-card-body h3 .game-logo { aspect-ratio: auto; object-fit: contain; width: min(320px, 100%); height: auto; margin: -0.5rem 0 0.25rem -0.5rem; }
+.press-card-image img { object-fit: contain; }
