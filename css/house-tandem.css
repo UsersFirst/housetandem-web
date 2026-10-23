@@ -39,7 +39,16 @@
   background: var(--bg-card-hover);
   color: var(--text-primary);
 }
-.game-card > img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.game-card > img, .game-card-media img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+/* A game that isn't out yet: not a link, no hover lift, with a badge on the image */
+.game-card-media { position: relative; }
+.game-card.soon:hover { transform: none; border-color: var(--border-color); background: var(--bg-card); }
+.soon-badge {
+  position: absolute; top: 0.75rem; left: 0.75rem;
+  padding: 0.3rem 0.75rem; border-radius: 999px;
+  background: var(--accent-green); color: #0b1a0c;
+  font-size: 0.8rem; font-weight: 700; letter-spacing: 0.02em;
+}
 .game-card-body { padding: 1.25rem 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
 .game-card-body h3 { font-size: 1.25rem; }
 .game-card-body p { color: var(--text-secondary); font-size: 0.95rem; flex: 1; }
