@@ -1,0 +1,10 @@
+{
+  "name": "housetandem-web",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/links.test.js test/geo.test.mjs",
+    "links": "node tools/build-links.js",
+    "check:links": "node tools/build-links.js --check",
+    "deploy:proxy": "npx wrangler@4 deploy -c workers/e-proxy/wrangler.toml"
+  }
+}

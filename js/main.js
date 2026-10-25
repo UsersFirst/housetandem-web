@@ -59,3 +59,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+// Privacy page: analytics opt-out button
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('ht-optout-btn');
+  const status = document.getElementById('ht-optout-status');
+  if (!btn || !window.HT) return;
+  const render = () => {
+    const off = window.HT.isOptedOut();
+    btn.textContent = off ? 'Turn analytics back on' : 'Turn off analytics';
+    status.textContent = navigator.globalPrivacyControl === true
+      ? 'Off: your browser sends Global Privacy Control.'
+      : (off ? 'Analytics are off in this browser.' : 'Analytics are on.');
+    btn.disabled = navigator.globalPrivacyControl === true;
+  };
+  btn.addEventListener('click', () => {
+    if (window.HT.isOptedOut()) window.HT.optIn(); else window.HT.optOut();
+    render();
+  });
+  render();
+});

@@ -42,7 +42,7 @@ Problems that the "6 reels a day" idea makes urgent:
 
 **D6. Move the game to `tandemonium.housetandem.com` (decided).** A shared root domain makes the site → game hand-off trivial and matches the rebrand. Keep `tandemonium.jimandi.love` as a path-preserving redirect (like `lab.usersfirst.games`). Also update the worker CORS origin and Google sign-in origins. Note: localStorage is per-origin, so existing players get a new `device_id` on the new domain; accept that small retention break rather than migrate.
 
-**D7. Session replay on the website only.** Replay of a WebGL canvas is mostly blank frames and wastes quota, so it's off in games.
+**D7. No session replay for now.** The site runs cookieless (no client session ID, so no replay), and replay of a WebGL canvas is mostly blank frames. Revisit only for a specific UX question.
 
 ## 2. Shared event schema (all games)
 

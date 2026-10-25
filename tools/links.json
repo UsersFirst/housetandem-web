@@ -1,0 +1,11 @@
+{
+  "_comment": "Short links: housetandem.com/<slug> redirects to <to> with these UTM tags. Edit, then run: node tools/build-links.js",
+  "links": {
+    "tt": { "to": "/", "utm_source": "tiktok", "utm_medium": "bio" },
+    "ig": { "to": "/", "utm_source": "instagram", "utm_medium": "bio" },
+    "yt": { "to": "/", "utm_source": "youtube", "utm_medium": "shorts" },
+    "x": { "to": "/", "utm_source": "x", "utm_medium": "bio" },
+    "dc": { "to": "/", "utm_source": "discord", "utm_medium": "server" },
+    "qr": { "to": "/", "utm_source": "qr", "utm_medium": "event" }
+  }
+}
