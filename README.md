@@ -10,7 +10,7 @@ It's a plain static site (HTML, CSS and a little JS), with no build step. It was
 |---|---|
 | `/` | Studio home with all the games |
 | `/about.html` | About the studio |
-| `/tandemonium/` | Tandemonium playtest and Discord page |
+| `/tandemonium/` | Tandemonium playtest and Discord page (the game itself is at tandemonium.housetandem.com) |
 | `/press.html` | Press kit |
 | `/support.html` | Support and FAQ |
 | `/privacy.html`, `/tos.html` | Privacy policy and terms |
