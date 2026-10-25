@@ -44,7 +44,8 @@ function build({ check = false } = {}) {
     const file = path.join(ROOT, slug, 'index.html');
     const html = page(slug, link);
     if (check) {
-      if (!fs.existsSync(file) || fs.readFileSync(file, 'utf8') !== html) problems.push(slug);
+      // Windows checkouts may have CRLF line endings; compare content only.
+      if (!fs.existsSync(file) || fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n') !== html) problems.push(slug);
     } else {
       fs.mkdirSync(path.dirname(file), { recursive: true });
       fs.writeFileSync(file, html);
