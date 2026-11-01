@@ -691,6 +691,24 @@ section {
   color: var(--text-muted);
 }
 
+.footer-social {
+  display: flex;
+  gap: 1rem;
+  list-style: none;
+}
+
+.footer-social a {
+  display: inline-flex;
+  padding: 0.25rem;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.footer-social a:hover,
+.footer-social a:focus-visible {
+  color: var(--text-primary, #fff);
+}
+
 /* ===== Animations ===== */
 .fade-in {
   opacity: 0;
