@@ -57,7 +57,8 @@
     var links = document.querySelectorAll('a[data-ht]');
     for (var i = 0; i < links.length; i++) {
       var parts = links[i].getAttribute('data-ht').split(':');
-      tagLink(links[i], parts[0], parts[1]);
+      // Social profile links stay clean (no UTM tags); clicks are still counted.
+      if (parts[0] !== "social") tagLink(links[i], parts[0], parts[1]);
     }
     document.addEventListener('click', function (ev) {
       var a = ev.target.closest && ev.target.closest('a[data-ht]');
