@@ -149,6 +149,12 @@
 .account-stats span { font-size: 0.78rem; color: var(--text-muted); }
 .btn.account-signout { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); cursor: pointer; }
 .btn.account-signout:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+.account-server { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+.account-server[hidden], .account-server [hidden] { display: none; }
+.account-server-member { font-size: 0.9rem; color: var(--accent-green); border: 1px solid var(--accent-green); border-radius: 999px; padding: 0.3rem 0.9rem; }
+.account-server-not { font-size: 0.9rem; color: var(--text-muted); }
+.btn.account-server-join { background: #5865f2; color: #fff; font-size: 0.95rem; padding: 0.6rem 1.2rem; }
+.btn.account-server-join:hover { background: #4752c4; color: #fff; }
 .account-danger { width: 100%; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
 .account-danger h2 { font-size: 1rem; color: #ff7a7a; }
 .account-danger p { color: var(--text-muted); font-size: 0.88rem; max-width: 40ch; }

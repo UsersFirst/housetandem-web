@@ -166,6 +166,8 @@
     link: goSignIn,
     signOut: signOut,
     deleteAccount: deleteAccount,
+    /** Is the linked Discord in the House Tandem server? { linked, member: true|false|null, invite } */
+    discordMembership: function () { return state.token ? api('/me/discord') : Promise.resolve(null); },
     onChange: function (fn) { listeners.push(fn); },
   };
 })();

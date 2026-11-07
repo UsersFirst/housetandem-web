@@ -23,6 +23,21 @@
   }
 
   var lastMe = null;
+  var serverState = null;
+
+  /** The House Tandem Discord: a member tick, or the invite. Hidden without Discord linked. */
+  function checkServer() {
+    A.discordMembership().then(function (d) {
+      var box = $('account-server');
+      if (!d || d.__status !== 200 || !d.linked) { box.hidden = true; return; }
+      serverState = d.member;
+      if (d.invite) $('account-server-join').href = d.invite;
+      $('account-server-member').hidden = d.member !== true;
+      $('account-server-not').hidden = d.member !== false;
+      $('account-server-join').hidden = d.member === true;
+      box.hidden = false;
+    }).catch(function () {});
+  }
 
   function render(me) {
     var user = A.user;
@@ -73,7 +88,9 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     render(null);
-    if (A.signedIn) A.refresh().then(function (me) { lastMe = me; render(me); });
+    if (A.signedIn) A.refresh().then(function (me) { lastMe = me; render(me); checkServer(); });
+    // Back from joining in another tab: check again.
+    window.addEventListener('focus', function () { if (A.signedIn && serverState === false) checkServer(); });
 
     $('account-discord-btn').addEventListener('click', function () { go(this, A.signInWithDiscord); });
     $('account-steam-btn').addEventListener('click', function () { go(this, A.signInWithSteam); });
