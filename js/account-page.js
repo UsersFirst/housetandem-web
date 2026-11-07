@@ -25,7 +25,13 @@
   var lastMe = null;
   var DICE_DEFS = 'https://dice.housetandem.com/api/achievements';
 
-  /** The 7, 11, Doubles card: the game's own badge list, lit for the ones this account earned. */
+  /** "streaks" → "Streaks" (a game's group id as a section title). */
+  function titleOf(group) { return String(group).replace(/[_-]+/g, ' ').replace(/^./, function (c) { return c.toUpperCase(); }); }
+
+  /**
+   * The 7, 11, Doubles card: "2/22" achievements, rolls and wins. Tapping the
+   * count opens the full list (uf-achievement-sheet), and each badge its card.
+   */
   function renderDice() {
     var defsP = fetch(DICE_DEFS).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
     Promise.all([defsP, A.games().catch(function () { return {}; })]).then(function (res) {
@@ -39,20 +45,16 @@
       $('dice-rolls').textContent = String(stats.rolls || 0);
       $('dice-wins').textContent = String(stats.wins || 0);
       $('dice-ach').textContent = defs.filter(function (d) { return have[d.id]; }).length + '/' + defs.length;
-      $('dice-badges').replaceChildren.apply($('dice-badges'), defs.map(function (d) {
-        var li = document.createElement('li');
-        li.className = have[d.id] ? 'earned' : 'locked';
-        li.title = d.name + ': ' + (d.description || '') + (have[d.id] ? '' : ' (not yet)');
-        var icon = document.createElement('span');
-        icon.className = 'badge-icon';
-        icon.textContent = d.icon || '🎲';
-        var name = document.createElement('span');
-        name.className = 'badge-name';
-        name.textContent = d.name;
-        li.appendChild(icon);
-        li.appendChild(name);
-        return li;
-      }));
+      var groups = [];
+      defs.forEach(function (d) { if (d.group && groups.indexOf(d.group) < 0) groups.push(d.group); });
+      var sheet = $('dice-ach-sheet');
+      sheet.sections = groups.map(function (g) { return { id: g, title: titleOf(g) }; });
+      sheet.achievements = defs.map(function (d) {
+        var at = have[d.id];
+        return { id: d.id, name: d.name, description: d.description || '', icon: d.icon || '🎲', section: d.group || undefined,
+          earned: !!at, earnedAt: typeof at === 'string' ? at : null };
+      });
+      $('dice-ach-open').setAttribute('aria-label', $('dice-ach').textContent + ' achievements. See all');
       $('account-dice').hidden = false;
     });
   }
@@ -125,6 +127,7 @@
     // Back from joining in another tab: check again.
     window.addEventListener('focus', function () { if (A.signedIn && serverState === false) checkServer(); });
 
+    $('dice-ach-open').addEventListener('click', function () { $('dice-ach-sheet').show(); });
     $('account-discord-btn').addEventListener('click', function () { go(this, A.signInWithDiscord); });
     $('account-steam-btn').addEventListener('click', function () { go(this, A.signInWithSteam); });
     $('account-signout').addEventListener('click', function () {

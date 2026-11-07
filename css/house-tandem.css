@@ -156,12 +156,21 @@
 .btn.account-server-join { background: #5865f2; color: #fff; font-size: 0.95rem; padding: 0.6rem 1.2rem; }
 .btn.account-server-join:hover { background: #4752c4; color: #fff; }
 .account-game[hidden] { display: none; }
-.account-badges { list-style: none; padding: 0; margin: 0.9rem 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(4.6rem, 1fr)); gap: 0.5rem; }
-.account-badges li { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; text-align: center; padding: 0.45rem 0.25rem; border-radius: 10px; border: 1px solid var(--border-color); }
-.account-badges .badge-icon { font-size: 1.45rem; line-height: 1; }
-.account-badges .badge-name { font-size: 0.68rem; line-height: 1.15; color: var(--text-secondary); }
-.account-badges li.earned { border-color: var(--accent-green); background: rgba(68, 255, 102, 0.06); }
-.account-badges li.locked { opacity: 0.38; filter: grayscale(1); }
+.account-ach-open { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; width: 100%; margin-top: 0.4rem; padding: 0.8rem; cursor: pointer;
+  font: inherit; color: inherit; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; }
+.account-ach-open:hover, .account-ach-open:focus-visible { border-color: var(--accent-green); outline: none; box-shadow: 0 0 14px rgba(68, 255, 102, 0.2); }
+.account-ach-open b { font-size: 2.6rem; line-height: 1; font-weight: 800; color: var(--accent-green); }
+.account-ach-open span { font-size: 0.85rem; color: var(--text-muted); }
+.account-ach-open .account-ach-see { color: var(--text-secondary); font-weight: 600; }
+.account-stats-small { grid-template-columns: repeat(2, 1fr); margin-top: 0.75rem; }
+.account-stats-small b { font-size: 1.05rem; }
+
+/* @usersfirst/ui on this site: its sheets in the site's colours and font, at web sizes
+   (the kit's sizes ramp up to TV sizes from 1024px wide; a website stays at these). */
+:root { --uf-font-ui: var(--font-body); --uf-color-surface: var(--bg-card); --uf-color-line-soft: var(--border-color); --uf-z-modal: 2000; }
+@media (min-width: 1024px) {
+  :root { --uf-size-xs: 11px; --uf-size-sm: 13px; --uf-size-md: 16px; --uf-size-lg: 18px; --uf-size-xl: 22px; --uf-size-2xl: 30px; }
+}
 .account-danger { width: 100%; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
 .account-danger h2 { font-size: 1rem; color: #ff7a7a; }
 .account-danger p { color: var(--text-muted); font-size: 0.88rem; max-width: 40ch; }

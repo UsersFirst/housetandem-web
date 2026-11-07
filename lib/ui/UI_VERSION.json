@@ -1,0 +1,16 @@
+{
+  "package": "@usersfirst/ui",
+  "version": "0.5.0",
+  "sourceCommit": "a2137dc7a4b6dea978d789204a6b1fa5b7e3291f",
+  "sourceRef": "pr-139-2-ga2137dc",
+  "files": [
+    "tokens.css",
+    "uf-element.js",
+    "elements/uf-sheet.js",
+    "elements/uf-controller-glyph.js",
+    "elements/uf-achievement-grid.js",
+    "elements/uf-achievement-detail.js",
+    "elements/uf-achievement-sheet.js"
+  ],
+  "syncedAt": "2026-11-07"
+}
