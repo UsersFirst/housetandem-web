@@ -94,3 +94,48 @@
 }
 .game-card-icon img { width: 52%; height: auto; }
 #games { padding-bottom: 5rem; }
+
+/* ===== Account (account.html + the nav's Sign in / pictures) ===== */
+.nav-account { display: inline-flex; align-items: center; gap: 0.45rem; }
+.nav-avatar { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--border-color); }
+.nav-avatar[data-provider="discord"] { box-shadow: 0 0 0 2px #5865f2; }
+.nav-avatar[data-provider="steam"] { box-shadow: 0 0 0 2px #66c0f4; }
+
+.account-page { display: flex; justify-content: center; padding-bottom: 4rem; }
+.account-card {
+  width: 100%; max-width: 520px; text-align: center;
+  background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px;
+  padding: 2.25rem 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;
+}
+.account-card[hidden] { display: none; }
+.account-card h1 { font-size: clamp(1.6rem, 5vw, 2.1rem); line-height: 1.15; }
+.account-logo { width: 160px; height: auto; }
+.account-lede { color: var(--text-secondary); max-width: 34ch; }
+.account-note { color: var(--text-muted); font-size: 0.9rem; max-width: 40ch; }
+.account-note strong { color: var(--text-secondary); }
+.account-error { color: #ff7a7a; font-size: 0.95rem; }
+.account-error[hidden] { display: none; }
+.btn.account-discord {
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  background: #5865f2; color: #fff; border: 0; font-size: 1.05rem; padding: 0.85rem 1.6rem; cursor: pointer;
+}
+.btn.account-discord:hover { background: #4752c4; color: #fff; }
+.btn.account-discord:disabled { opacity: 0.6; cursor: wait; }
+.account-avatars { display: flex; gap: 0.75rem; justify-content: center; }
+.account-avatars img { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border-color); }
+.account-avatars img[data-provider="discord"] { border-color: #5865f2; }
+.account-avatars img[data-provider="steam"] { border-color: #66c0f4; }
+.account-identities { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+.account-identities li { font-size: 0.85rem; padding: 0.3rem 0.8rem; border-radius: 999px; border: 1px solid var(--border-color); color: var(--text-muted); }
+.account-identities li.linked[data-provider="discord"] { border-color: #5865f2; color: var(--text-primary); }
+.account-identities li.linked[data-provider="steam"] { border-color: #66c0f4; color: var(--text-primary); }
+.account-game { width: 100%; text-align: left; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem; }
+.account-game-head { display: flex; gap: 0.85rem; align-items: center; margin-bottom: 0.9rem; }
+.account-game-head img { width: 96px; height: 54px; object-fit: cover; border-radius: 8px; flex: none; }
+.account-game-head h2 { font-size: 1.15rem; }
+.account-game-head a { font-size: 0.9rem; }
+.account-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; text-align: center; }
+.account-stats b { display: block; font-size: 1.35rem; color: var(--accent-green); }
+.account-stats span { font-size: 0.78rem; color: var(--text-muted); }
+.btn.account-signout { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); cursor: pointer; }
+.btn.account-signout:hover { color: var(--text-primary); border-color: var(--text-secondary); }
