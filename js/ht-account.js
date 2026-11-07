@@ -1,7 +1,7 @@
 // House Tandem account on the website (Tandemonium #612, housetandem-web #21).
 //
-// The same account as the games: sign in with Discord here, and a Steam player
-// who linked Discord in Tandemonium sees both. The account lives on the
+// The same account as the games: sign in with Discord or Steam here, and link
+// the other one so both pictures show. The account lives on the
 // Tandemonium API for now (it moves to auth.housetandem.com later).
 //
 // Every page: a "Sign in" link in the nav, which becomes the account's pictures
@@ -67,21 +67,29 @@
     });
   }
 
-  /** Go to Discord and come back to this page signed in. */
-  function signInWithDiscord() {
+  var NAMES = { discord: 'Discord', steam: 'Steam' };
+
+  /**
+   * Go to Discord or Steam and come back to this page signed in. Already signed
+   * in, it links that sign-in to this account instead (the API sees the session).
+   */
+  function goSignIn(provider) {
     var back = location.origin + location.pathname + location.search;
-    return api('/auth/discord/begin', { method: 'POST', body: { mode: 'redirect', return_to: back } }).then(function (d) {
+    var body = provider === 'discord' ? { mode: 'redirect', return_to: back } : { return_to: back };
+    return api('/auth/' + provider + '/begin', { method: 'POST', body: body }).then(function (d) {
       if (d.url) { location.assign(d.url); return true; }
-      throw new Error(d.error || 'Discord sign-in is unavailable right now');
+      throw new Error(d.error || NAMES[provider] + ' sign-in is unavailable right now');
     });
   }
+  function signInWithDiscord() { return goSignIn('discord'); }
+  function signInWithSteam() { return goSignIn('steam'); }
 
   function signOut() {
     state.token = null; state.user = null;
     save();
   }
 
-  // Back from Discord: #ht_auth=<token>. Take it off the URL straight away.
+  // Back from Discord or Steam: #ht_auth=<token>. Take it off the URL straight away.
   function takeRedirect() {
     if (!location.hash || location.hash.indexOf('ht_auth=') < 0) return false;
     var params = new URLSearchParams(location.hash.slice(1));
@@ -145,6 +153,8 @@
     pictures: pictures,
     refresh: refresh,
     signInWithDiscord: signInWithDiscord,
+    signInWithSteam: signInWithSteam,
+    link: goSignIn,
     signOut: signOut,
     onChange: function (fn) { listeners.push(fn); },
   };
