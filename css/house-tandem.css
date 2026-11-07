@@ -149,3 +149,24 @@
 .account-stats span { font-size: 0.78rem; color: var(--text-muted); }
 .btn.account-signout { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); cursor: pointer; }
 .btn.account-signout:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+.account-danger { width: 100%; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+.account-danger h2 { font-size: 1rem; color: #ff7a7a; }
+.account-danger p { color: var(--text-muted); font-size: 0.88rem; max-width: 40ch; }
+.btn.account-delete { background: transparent; color: #ff7a7a; border: 1px solid #ff7a7a55; cursor: pointer; font-size: 0.92rem; }
+.btn.account-delete:hover { background: #ff7a7a1a; border-color: #ff7a7a; color: #ff9a9a; }
+.account-dialog { max-width: min(30rem, calc(100vw - 32px)); width: 100%; box-sizing: border-box; background: var(--bg-card); color: var(--text-primary); border: 2px solid #ff5c5c; border-radius: 16px; padding: 1.5rem 1.25rem; text-align: left; }
+.account-dialog::backdrop { background: rgba(0, 0, 0, 0.72); }
+.account-dialog h2 { font-size: 1.3rem; margin: 0 0 0.75rem; color: #ff7a7a; }
+.account-dialog p, .account-dialog li { font-size: 0.95rem; color: var(--text-secondary); }
+.account-dialog ul { margin: 0.25rem 0 0.75rem; padding-left: 1.2rem; display: grid; gap: 0.3rem; }
+.account-warning { background: #ff5c5c1f; border: 1px solid #ff5c5c66; border-radius: 10px; padding: 0.7rem 0.85rem; color: var(--text-primary) !important; }
+.account-warning strong { color: #ff8a8a; }
+.account-small { font-size: 0.85rem !important; color: var(--text-muted) !important; }
+.account-dialog label { display: block; margin: 1rem 0 0.4rem; font-size: 0.95rem; }
+.account-dialog input { width: 100%; box-sizing: border-box; font: inherit; font-size: 1.1rem; letter-spacing: 0.12em; padding: 0.65rem 0.8rem; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); }
+.account-dialog input:focus { outline: 2px solid #ff7a7a; outline-offset: 1px; }
+.account-dialog-buttons { display: flex; gap: 0.75rem; justify-content: flex-end; flex-wrap: wrap; margin-top: 1.1rem; }
+.account-dialog-buttons .btn { flex: 1 1 8rem; padding-left: 1rem; padding-right: 1rem; justify-content: center; text-align: center; }
+.btn.account-delete-final { background: #d93636; color: #fff; border: 0; cursor: pointer; }
+.btn.account-delete-final:hover:not(:disabled) { background: #b82626; }
+.btn.account-delete-final:disabled { opacity: 0.4; cursor: not-allowed; }

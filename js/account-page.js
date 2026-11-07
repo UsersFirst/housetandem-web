@@ -22,6 +22,8 @@
     });
   }
 
+  var lastMe = null;
+
   function render(me) {
     var user = A.user;
     $('account-signin').hidden = !!user;
@@ -71,13 +73,46 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     render(null);
-    if (A.signedIn) A.refresh().then(render);
+    if (A.signedIn) A.refresh().then(function (me) { lastMe = me; render(me); });
 
     $('account-discord-btn').addEventListener('click', function () { go(this, A.signInWithDiscord); });
     $('account-steam-btn').addEventListener('click', function () { go(this, A.signInWithSteam); });
     $('account-signout').addEventListener('click', function () {
       A.signOut();
       render(null);
+    });
+
+    // Delete: a strict warning in a dialog, and the word DELETE typed out.
+    var dlg = $('account-delete-dialog');
+    var input = $('delete-confirm');
+    var final = $('delete-final');
+    $('account-delete').addEventListener('click', function () {
+      var ids = (A.user && A.user.identities) || {};
+      var names = ['discord', 'steam'].filter(function (p) { return ids[p]; }).map(function (p) { return p === 'discord' ? 'Discord' : 'Steam'; });
+      $('delete-signins').textContent = names.length ? names.join(' and ') : 'all of them';
+      $('delete-rides').textContent = lastMe ? $('stat-rides').textContent + ' rides' : 'all';
+      $('delete-ach').textContent = lastMe ? $('stat-ach').textContent : 'all';
+      input.value = '';
+      final.disabled = true;
+      $('delete-error').hidden = true;
+      dlg.showModal();
+    });
+    input.addEventListener('input', function () { final.disabled = input.value.trim() !== 'DELETE'; });
+    final.addEventListener('click', function () {
+      if (input.value.trim() !== 'DELETE') return;
+      final.disabled = true;
+      final.textContent = 'Deleting…';
+      A.deleteAccount('DELETE').then(function () {
+        dlg.close();
+        $('account-profile').hidden = true;
+        $('account-signin').hidden = true;
+        $('account-deleted').hidden = false;
+      }).catch(function (e) {
+        final.textContent = 'Delete everything';
+        final.disabled = false;
+        $('delete-error').textContent = e.message;
+        $('delete-error').hidden = false;
+      });
     });
   });
 })();
