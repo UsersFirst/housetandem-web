@@ -151,7 +151,7 @@
   var cameBack = takeRedirect();
   // Signed in, a link to another House Tandem site opens it signed in too:
   // a one-time code rides along (the session itself never goes in a URL).
-  var HANDOFF_HOSTS = ['dice.housetandem.com'];
+  var HANDOFF_HOSTS = ['dice.housetandem.com', 'coins.housetandem.com'];
   function handoffLinks(e) {
     var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
     if (!a || !state.token || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
