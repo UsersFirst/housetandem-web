@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { targetUrl, page } = require('../tools/build-links.js');
+const { targetUrl, page, PASS_THROUGH } = require('../tools/build-links.js');
 const { links } = require('../tools/links.json');
 
 test('bio links carry source, medium and the slug as campaign', () => {
@@ -25,4 +25,24 @@ test('/discord forwards to the invite as it is, so it can be swapped in one plac
   assert.ok(html.includes('content="0; url=' + links.discord.to + '"'));
   assert.ok(html.includes('location.replace("' + links.discord.to + '");'));
   assert.match(html, /name="robots" content="noindex"/);
+});
+
+// Runs a short link's redirect script against a landing URL and returns where it sends you.
+function redirectFrom(slug, landing) {
+  const html = page(slug, links[slug]);
+  const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+  const loc = new URL(landing);
+  let went = null;
+  const location = { search: loc.search, hash: loc.hash, href: loc.href, replace: (u) => { went = u; } };
+  new Function('location', 'URL', 'URLSearchParams', script)(location, URL, URLSearchParams);
+  return went;
+}
+
+test('?server= on a short link becomes utm_content, so a share can name its Discord server', () => {
+  assert.strictEqual(redirectFrom('dc', 'https://housetandem.com/dc?server=cogg'), '/?utm_source=discord&utm_medium=server&utm_campaign=dc&utm_content=cogg');
+  assert.strictEqual(redirectFrom('dc', 'https://housetandem.com/dc/'), '/?utm_source=discord&utm_medium=server&utm_campaign=dc');
+});
+
+test('a short link keeps its own tags and passes on only utm_* (no other parameters)', () => {
+  assert.strictEqual(redirectFrom('dc', 'https://housetandem.com/dc?utm_source=evil&utm_term=x&foo=1#play'), '/?utm_source=discord&utm_medium=server&utm_campaign=dc&utm_term=x#play');
 });

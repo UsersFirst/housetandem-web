@@ -20,6 +20,10 @@ function targetUrl(slug, link) {
   return `${link.to || '/'}?${qs}`;
 }
 
+// Query parameters a short link passes on. ?server=cogg (which Discord server it was shared in)
+// becomes utm_content=cogg; any utm_* the link doesn't set itself goes through as it is.
+const PASS_THROUGH = `var q=new URLSearchParams(location.search),t=new URL(TO,location.href);q.forEach(function(v,k){if(k==="server")k="utm_content";if(/^utm_/.test(k)&&!t.searchParams.has(k))t.searchParams.set(k,v.slice(0,40))});location.replace(t.pathname+t.search+location.hash);`;
+
 function page(slug, link) {
   const to = targetUrl(slug, link);
   return `<!DOCTYPE html>
@@ -31,7 +35,7 @@ function page(slug, link) {
 <title>${link.title || 'House Tandem'}</title>
 <meta http-equiv="refresh" content="0; url=${to}">
 <link rel="canonical" href="https://housetandem.com/${link.utm === false ? slug : ''}">
-<script>location.replace(${JSON.stringify(to)}${link.utm === false ? '' : ' + location.hash'});</script>
+<script>${link.utm === false ? `location.replace(${JSON.stringify(to)});` : `var TO=${JSON.stringify(to)};${PASS_THROUGH}`}</script>
 </head>
 <body><a href="${to}">${link.title || 'House Tandem'}</a></body>
 </html>
@@ -56,7 +60,7 @@ function build({ check = false } = {}) {
   return problems;
 }
 
-module.exports = { targetUrl, page, build };
+module.exports = { targetUrl, page, build, PASS_THROUGH };
 
 if (require.main === module) {
   const check = process.argv.includes('--check');

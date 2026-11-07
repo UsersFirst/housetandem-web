@@ -7,7 +7,7 @@
 <title>House Tandem</title>
 <meta http-equiv="refresh" content="0; url=/?utm_source=instagram&utm_medium=bio&utm_campaign=ig">
 <link rel="canonical" href="https://housetandem.com/">
-<script>location.replace("/?utm_source=instagram&utm_medium=bio&utm_campaign=ig" + location.hash);</script>
+<script>var TO="/?utm_source=instagram&utm_medium=bio&utm_campaign=ig";var q=new URLSearchParams(location.search),t=new URL(TO,location.href);q.forEach(function(v,k){if(k==="server")k="utm_content";if(/^utm_/.test(k)&&!t.searchParams.has(k))t.searchParams.set(k,v.slice(0,40))});location.replace(t.pathname+t.search+location.hash);</script>
 </head>
 <body><a href="/?utm_source=instagram&utm_medium=bio&utm_campaign=ig">House Tandem</a></body>
 </html>
