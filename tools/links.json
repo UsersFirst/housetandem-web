@@ -6,6 +6,7 @@
     "yt": { "to": "/", "utm_source": "youtube", "utm_medium": "shorts" },
     "x": { "to": "/", "utm_source": "x", "utm_medium": "bio" },
     "dc": { "to": "/", "utm_source": "discord", "utm_medium": "server" },
-    "qr": { "to": "/", "utm_source": "qr", "utm_medium": "event" }
+    "qr": { "to": "/", "utm_source": "qr", "utm_medium": "event" },
+    "discord": { "to": "https://discord.gg/wX6Qs3GZK4", "utm": false, "title": "House Tandem Discord", "_note": "Share housetandem.com/discord everywhere. If an invite leaks to bots, make a new never-expiring invite, change it here, rebuild." }
   }
 }
