@@ -17,3 +17,12 @@ test('redirect page works without JS and is not indexed', () => {
   assert.match(html, /http-equiv="refresh" content="0; url=\/\?utm_source=instagram/);
   assert.match(html, /name="robots" content="noindex"/);
 });
+
+test('/discord forwards to the invite as it is, so it can be swapped in one place', () => {
+  assert.strictEqual(targetUrl('discord', links.discord), links.discord.to);
+  assert.match(links.discord.to, /^https:\/\/discord\.gg\/[A-Za-z0-9]+$/);
+  const html = page('discord', links.discord);
+  assert.ok(html.includes('content="0; url=' + links.discord.to + '"'));
+  assert.ok(html.includes('location.replace("' + links.discord.to + '");'));
+  assert.match(html, /name="robots" content="noindex"/);
+});

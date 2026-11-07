@@ -7,9 +7,11 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 // Top-level names a slug must never overwrite.
-const RESERVED = new Set(['css', 'js', 'images', 'tools', 'docs', 'workers', 'tandemonium', 'node_modules', 'test']);
+const RESERVED = new Set(['account', 'css', 'js', 'images', 'tools', 'docs', 'workers', 'tandemonium', 'node_modules', 'test']);
 
 function targetUrl(slug, link) {
+  // An outside address (the Discord invite) goes as it is, without UTM tags.
+  if (link.utm === false) return link.to;
   const qs = new URLSearchParams();
   for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content']) {
     if (link[k]) qs.set(k, link[k]);
@@ -26,12 +28,12 @@ function page(slug, link) {
 <head>
 <meta charset="UTF-8">
 <meta name="robots" content="noindex">
-<title>House Tandem</title>
+<title>${link.title || 'House Tandem'}</title>
 <meta http-equiv="refresh" content="0; url=${to}">
-<link rel="canonical" href="https://housetandem.com/">
-<script>location.replace(${JSON.stringify(to)} + location.hash);</script>
+<link rel="canonical" href="https://housetandem.com/${link.utm === false ? slug : ''}">
+<script>location.replace(${JSON.stringify(to)}${link.utm === false ? '' : ' + location.hash'});</script>
 </head>
-<body><a href="${to}">House Tandem</a></body>
+<body><a href="${to}">${link.title || 'House Tandem'}</a></body>
 </html>
 `;
 }
