@@ -84,6 +84,15 @@
   function signInWithDiscord() { return goSignIn('discord'); }
   function signInWithSteam() { return goSignIn('steam'); }
 
+  /** Delete the account and everything on it; the server needs the typed word. */
+  function deleteAccount(confirmWord) {
+    return api('/me/delete', { method: 'POST', body: { confirm: confirmWord } }).then(function (d) {
+      if (d.__status !== 200 || !d.deleted) throw new Error(d.error || 'The account could not be deleted. Nothing was changed.');
+      signOut();
+      return d;
+    });
+  }
+
   function signOut() {
     state.token = null; state.user = null;
     save();
@@ -156,6 +165,7 @@
     signInWithSteam: signInWithSteam,
     link: goSignIn,
     signOut: signOut,
+    deleteAccount: deleteAccount,
     onChange: function (fn) { listeners.push(fn); },
   };
 })();

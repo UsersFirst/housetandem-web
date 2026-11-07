@@ -77,7 +77,43 @@
 
         <p class="account-note" id="account-link-note" hidden>Link the other one and it joins this account: rides, achievements and both pictures. If it already had its own account, the two become one.</p>
         <button class="btn account-signout" id="account-signout" type="button">Sign out</button>
+
+        <div class="account-danger">
+          <h2>Delete account</h2>
+          <p>Permanently delete your House Tandem account and every record on it. This can't be undone.</p>
+          <button class="btn account-delete" id="account-delete" type="button">Delete my account…</button>
+        </div>
       </section>
+
+      <!-- After a delete -->
+      <section class="account-card" id="account-deleted" hidden>
+        <h1>Your account is deleted</h1>
+        <p class="account-lede">Your House Tandem account and its records are gone. Thanks for riding with us.</p>
+        <a class="btn" href="index.html">Back to House Tandem</a>
+      </section>
+
+      <dialog class="account-dialog" id="account-delete-dialog" aria-labelledby="delete-title">
+        <form method="dialog" id="account-delete-form">
+          <h2 id="delete-title">Delete your House Tandem account?</h2>
+          <p class="account-warning"><strong>This is permanent.</strong> Your account and every record on it are deleted straight away. We can't restore them, not even if you ask.</p>
+          <p>This deletes:</p>
+          <ul>
+            <li>Your account and its linked sign-ins: <span id="delete-signins">Discord and Steam</span></li>
+            <li>Every Tandemonium ride and leaderboard time (<span id="delete-rides">all</span>)</li>
+            <li>Your achievements (<span id="delete-ach">all</span>)</li>
+            <li>Your Daily Ride results and streaks</li>
+            <li>Your records with riding partners. Their own rides stay, without your name.</li>
+          </ul>
+          <p class="account-small">Not deleted: achievements on your Steam profile (those belong to Steam), and progress the game keeps on your own devices. If you play Tandemonium again and sign in, you'll start a new, empty account.</p>
+          <label for="delete-confirm">Type <b>DELETE</b> to confirm</label>
+          <input id="delete-confirm" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text">
+          <p class="account-error" id="delete-error" role="alert" hidden></p>
+          <div class="account-dialog-buttons">
+            <button type="submit" value="cancel" class="btn account-signout" id="delete-cancel" autofocus>Cancel</button>
+            <button type="button" class="btn account-delete-final" id="delete-final" disabled>Delete everything</button>
+          </div>
+        </form>
+      </dialog>
 
     </div>
   </main>
