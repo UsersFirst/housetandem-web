@@ -1,5 +1,5 @@
-// account.html: sign in with Discord, then the account's pictures, linked
-// sign-ins and Tandemonium record. Needs js/ht-account.js first.
+// account.html: sign in with Discord or Steam, then the account's pictures,
+// linked sign-ins (with a Link button for the missing one) and Tandemonium record. Needs js/ht-account.js first.
 (function () {
   var A = window.HTAccount;
   var $ = function (id) { return document.getElementById(id); };
@@ -8,6 +8,18 @@
     if (!ms) return '–';
     var s = Math.round(ms / 1000);
     return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }
+
+  /** Start a sign-in or link from a button; show what went wrong if it can't start. */
+  function go(btn, start) {
+    var err = A.signedIn ? $('account-link-error') : $('account-error');
+    btn.disabled = true;
+    err.hidden = true;
+    start().catch(function (e) {
+      btn.disabled = false;
+      err.textContent = e.message;
+      err.hidden = false;
+    });
   }
 
   function render(me) {
@@ -31,11 +43,21 @@
       var linked = !!ids[pair[0]];
       li.className = linked ? 'linked' : 'unlinked';
       li.setAttribute('data-provider', pair[0]);
-      li.textContent = pair[1] + (linked ? ' · ' + (ids[pair[0]].name || 'linked') : ' · not linked');
+      if (linked) {
+        li.textContent = pair[1] + ' · ' + (ids[pair[0]].name || 'linked');
+      } else {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'account-link';
+        b.id = 'account-link-' + pair[0];
+        b.textContent = 'Link ' + pair[1];
+        b.addEventListener('click', function () { go(b, function () { return A.link(pair[0]); }); });
+        li.appendChild(b);
+      }
       return li;
     });
     $('account-identities').replaceChildren.apply($('account-identities'), rows);
-    $('account-steam-note').hidden = !!ids.steam;
+    $('account-link-note').hidden = !!(ids.steam && ids.discord);
 
     if (me) {
       var best = (me.bestScores || []);
@@ -51,16 +73,8 @@
     render(null);
     if (A.signedIn) A.refresh().then(render);
 
-    $('account-discord-btn').addEventListener('click', function () {
-      var btn = this;
-      btn.disabled = true;
-      $('account-error').hidden = true;
-      A.signInWithDiscord().catch(function (e) {
-        btn.disabled = false;
-        $('account-error').textContent = e.message;
-        $('account-error').hidden = false;
-      });
-    });
+    $('account-discord-btn').addEventListener('click', function () { go(this, A.signInWithDiscord); });
+    $('account-steam-btn').addEventListener('click', function () { go(this, A.signInWithSteam); });
     $('account-signout').addEventListener('click', function () {
       A.signOut();
       render(null);
