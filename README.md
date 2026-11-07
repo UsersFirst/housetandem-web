@@ -44,6 +44,10 @@ Plan: [`docs/analytics-and-promotion-plan.md`](docs/analytics-and-promotion-plan
 
 `npm test` runs the unit tests.
 
+## UI kit
+
+`lib/ui/` is a vendored copy of the House Tandem UI kit (`@usersfirst/ui`, from the tandemonium-controller-lab repo, the same kit Tandemonium uses). The account page uses its `uf-achievement-sheet` for a game's full achievement list and each badge's card. To update it, check the lab out next to this repo at the tag you want (`ui-vX.Y.Z`), run `npm run sync-ui`, and commit `lib/ui/`. `npm run check:ui` reports drift from the lab checkout. `lib/ui/UI_VERSION.json` records the version and commit. Add a file to the list in `tools/sync-ui.js` when a page needs another element. The site maps the kit's tokens to its own colours at the end of `css/house-tandem.css`.
+
 ## Logo files
 
 `images/logos/` has the House Tandem logo as SVG (traced) and PNG. The SVGs were traced from Pete's raster logo with `tools/trace.js`, one colour mask per brand colour, with "TANDEM" filled by a gradient. `tools/build.js` then assembles the variants: full, light, dark, mark, square icon, favicon, wordmark and horizontal lockup. To re-run them, `npm i potrace@2.1.8` in a scratch folder and see the comments in the scripts.
