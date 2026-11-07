@@ -7,7 +7,7 @@
 <title>House Tandem</title>
 <meta http-equiv="refresh" content="0; url=/?utm_source=discord&utm_medium=server&utm_campaign=dc">
 <link rel="canonical" href="https://housetandem.com/">
-<script>location.replace("/?utm_source=discord&utm_medium=server&utm_campaign=dc" + location.hash);</script>
+<script>var TO="/?utm_source=discord&utm_medium=server&utm_campaign=dc";var q=new URLSearchParams(location.search),t=new URL(TO,location.href);q.forEach(function(v,k){if(k==="server")k="utm_content";if(/^utm_/.test(k)&&!t.searchParams.has(k))t.searchParams.set(k,v.slice(0,40))});location.replace(t.pathname+t.search+location.hash);</script>
 </head>
 <body><a href="/?utm_source=discord&utm_medium=server&utm_campaign=dc">House Tandem</a></body>
 </html>
