@@ -143,7 +143,7 @@
 .account-game-head { display: flex; gap: 0.85rem; align-items: center; margin-bottom: 0.9rem; }
 .account-game-head img { width: 96px; height: 54px; object-fit: cover; border-radius: 8px; flex: none; }
 .account-game-head h2 { font-size: 1.15rem; }
-.account-game-head a { font-size: 0.9rem; }
+.account-game-head a { font-size: 0.9rem; white-space: nowrap; }
 .account-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; text-align: center; }
 .account-stats b { display: block; font-size: 1.35rem; color: var(--accent-green); }
 .account-stats span { font-size: 0.78rem; color: var(--text-muted); }
