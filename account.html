@@ -82,24 +82,8 @@
           </div>
         </div>
 
-        <div class="account-game" id="account-dice" hidden>
-          <div class="account-game-head">
-            <img src="images/games/dice.jpg" alt="" width="96" height="54">
-            <div>
-              <h2>7, 11, Doubles</h2>
-              <a href="https://dice.housetandem.com" data-ht="play:dice_account">Play in browser &rarr;</a>
-            </div>
-          </div>
-          <button type="button" class="account-ach-open" id="dice-ach-open" aria-haspopup="dialog">
-            <b id="dice-ach">0/0</b>
-            <span>achievements</span>
-            <span class="account-ach-see">See all &rsaquo;</span>
-          </button>
-          <div class="account-stats account-stats-small">
-            <div><b id="dice-rolls">0</b><span>rolls</span></div>
-            <div><b id="dice-wins">0</b><span>wins</span></div>
-          </div>
-        </div>
+        <!-- One card per House Tandem game with achievements (js/account-page.js GAMES). -->
+        <div id="account-games"></div>
 
         <p class="account-note" id="account-link-note" hidden>Link the other one and it joins this account: rides, achievements and both pictures. If it already had its own account, the two become one.</p>
         <button class="btn account-signout" id="account-signout" type="button">Sign out</button>
@@ -118,8 +102,8 @@
         <a class="btn" href="index.html">Back to House Tandem</a>
       </section>
 
-      <!-- The full list and each badge's card (@usersfirst/ui uf-achievement-sheet). -->
-      <uf-achievement-sheet id="dice-ach-sheet" heading="7, 11, Doubles"></uf-achievement-sheet>
+      <!-- Each game's full list and badge cards (@usersfirst/ui uf-achievement-sheet), added by js/account-page.js. -->
+      <div id="account-sheets"></div>
 
       <dialog class="account-dialog" id="account-delete-dialog" aria-labelledby="delete-title">
         <form method="dialog" id="account-delete-form">

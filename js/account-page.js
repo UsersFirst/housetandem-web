@@ -23,40 +23,109 @@
   }
 
   var lastMe = null;
-  var DICE_DEFS = 'https://dice.housetandem.com/api/achievements';
+
+  /**
+   * The House Tandem games with achievements. Each publishes its own list at
+   * `defs` ({ achievements: [{ id, name, description, icon, group }] }); the
+   * account's progress comes from /me/games under `game`. A card stays hidden
+   * until its list loads.
+   */
+  var GAMES = [
+    { game: 'dice', title: '7, 11, Doubles', img: 'images/games/dice.jpg', url: 'https://dice.housetandem.com',
+      defs: 'https://dice.housetandem.com/api/achievements', icon: '🎲', stats: [['rolls', 'rolls'], ['wins', 'wins']] },
+    { game: 'coins', title: 'Carnival Dozer', img: 'images/games/coinpusher.jpg', url: 'https://coins.housetandem.com',
+      defs: 'https://coins.housetandem.com/api/achievements', icon: '🪙', stats: [['games', 'games'], ['coinsWon', 'coins won']] },
+  ];
 
   /** "streaks" → "Streaks" (a game's group id as a section title). */
   function titleOf(group) { return String(group).replace(/[_-]+/g, ' ').replace(/^./, function (c) { return c.toUpperCase(); }); }
 
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  /** A game's card (hidden until filled) and its sheet. Ids: account-<game>, <game>-ach, <game>-ach-open, <game>-ach-sheet, <game>-<stat>. */
+  function buildCard(g) {
+    var card = el('div', 'account-game');
+    card.id = 'account-' + g.game;
+    card.hidden = true;
+    var head = el('div', 'account-game-head');
+    var img = el('img');
+    img.src = g.img; img.alt = ''; img.width = 96; img.height = 54;
+    var titles = el('div');
+    var play = el('a', null, 'Play in browser \u2192');
+    play.href = g.url;
+    play.setAttribute('data-ht', 'play:' + g.game + '_account');
+    titles.appendChild(el('h2', null, g.title));
+    titles.appendChild(play);
+    head.appendChild(img);
+    head.appendChild(titles);
+    var open = el('button', 'account-ach-open');
+    open.type = 'button';
+    open.id = g.game + '-ach-open';
+    open.setAttribute('aria-haspopup', 'dialog');
+    var count = el('b', null, '0/0');
+    count.id = g.game + '-ach';
+    open.appendChild(count);
+    open.appendChild(el('span', null, 'achievements'));
+    open.appendChild(el('span', 'account-ach-see', 'See all \u203a'));
+    var stats = el('div', 'account-stats account-stats-small');
+    g.stats.forEach(function (s) {
+      var cell = el('div');
+      var b = el('b', null, '0');
+      b.id = g.game + '-' + s[0];
+      cell.appendChild(b);
+      cell.appendChild(el('span', null, s[1]));
+      stats.appendChild(cell);
+    });
+    card.appendChild(head);
+    card.appendChild(open);
+    card.appendChild(stats);
+    $('account-games').appendChild(card);
+    var sheet = document.createElement('uf-achievement-sheet');
+    sheet.id = g.game + '-ach-sheet';
+    sheet.setAttribute('heading', g.title);
+    $('account-sheets').appendChild(sheet);
+    open.addEventListener('click', function () { sheet.show(); });
+  }
+
   /**
-   * The 7, 11, Doubles card: "2/22" achievements, rolls and wins. Tapping the
-   * count opens the full list (uf-achievement-sheet), and each badge its card.
+   * A game's card: "2/22" achievements and its stats. Tapping the count opens
+   * the full list (uf-achievement-sheet), and each badge its card.
    */
-  function renderDice() {
-    var defsP = fetch(DICE_DEFS).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
-    Promise.all([defsP, A.games().catch(function () { return {}; })]).then(function (res) {
+  function renderGame(g, gamesP) {
+    var defsP = fetch(g.defs).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    Promise.all([defsP, gamesP]).then(function (res) {
       var raw = res[0];
       var defs = Array.isArray(raw) ? raw : (raw && raw.achievements) || [];
       if (!defs.length) return;
-      var dice = (res[1] && res[1].dice) || { earned: [], stats: {} };
+      var mine = (res[1] && res[1][g.game]) || { earned: [], stats: {} };
       var have = {};
-      (dice.earned || []).forEach(function (e) { have[e.id] = e.earnedAt || true; });
-      var stats = dice.stats || {};
-      $('dice-rolls').textContent = String(stats.rolls || 0);
-      $('dice-wins').textContent = String(stats.wins || 0);
-      $('dice-ach').textContent = defs.filter(function (d) { return have[d.id]; }).length + '/' + defs.length;
+      (mine.earned || []).forEach(function (e) { have[e.id] = e.earnedAt || true; });
+      var stats = mine.stats || {};
+      g.stats.forEach(function (s) { $(g.game + '-' + s[0]).textContent = String(stats[s[0]] || 0); });
+      var count = $(g.game + '-ach');
+      count.textContent = defs.filter(function (d) { return have[d.id]; }).length + '/' + defs.length;
       var groups = [];
       defs.forEach(function (d) { if (d.group && groups.indexOf(d.group) < 0) groups.push(d.group); });
-      var sheet = $('dice-ach-sheet');
-      sheet.sections = groups.map(function (g) { return { id: g, title: titleOf(g) }; });
+      var sheet = $(g.game + '-ach-sheet');
+      sheet.sections = groups.map(function (gr) { return { id: gr, title: titleOf(gr) }; });
       sheet.achievements = defs.map(function (d) {
         var at = have[d.id];
-        return { id: d.id, name: d.name, description: d.description || '', icon: d.icon || '🎲', section: d.group || undefined,
+        return { id: d.id, name: d.name, description: d.description || '', icon: d.icon || g.icon, section: d.group || undefined,
           earned: !!at, earnedAt: typeof at === 'string' ? at : null };
       });
-      $('dice-ach-open').setAttribute('aria-label', $('dice-ach').textContent + ' achievements. See all');
-      $('account-dice').hidden = false;
+      $(g.game + '-ach-open').setAttribute('aria-label', count.textContent + ' achievements. See all');
+      $('account-' + g.game).hidden = false;
     });
+  }
+
+  function renderGames() {
+    var gamesP = A.games().catch(function () { return {}; });
+    GAMES.forEach(function (g) { renderGame(g, gamesP); });
   }
   var serverState = null;
 
@@ -123,11 +192,11 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     render(null);
-    if (A.signedIn) A.refresh().then(function (me) { lastMe = me; render(me); checkServer(); renderDice(); });
+    GAMES.forEach(buildCard);
+    if (A.signedIn) A.refresh().then(function (me) { lastMe = me; render(me); checkServer(); renderGames(); });
     // Back from joining in another tab: check again.
     window.addEventListener('focus', function () { if (A.signedIn && serverState === false) checkServer(); });
 
-    $('dice-ach-open').addEventListener('click', function () { $('dice-ach-sheet').show(); });
     $('account-discord-btn').addEventListener('click', function () { go(this, A.signInWithDiscord); });
     $('account-steam-btn').addEventListener('click', function () { go(this, A.signInWithSteam); });
     $('account-signout').addEventListener('click', function () {
