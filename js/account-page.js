@@ -23,6 +23,39 @@
   }
 
   var lastMe = null;
+  var DICE_DEFS = 'https://dice.housetandem.com/api/achievements';
+
+  /** The 7, 11, Doubles card: the game's own badge list, lit for the ones this account earned. */
+  function renderDice() {
+    var defsP = fetch(DICE_DEFS).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    Promise.all([defsP, A.games().catch(function () { return {}; })]).then(function (res) {
+      var raw = res[0];
+      var defs = Array.isArray(raw) ? raw : (raw && raw.achievements) || [];
+      if (!defs.length) return;
+      var dice = (res[1] && res[1].dice) || { earned: [], stats: {} };
+      var have = {};
+      (dice.earned || []).forEach(function (e) { have[e.id] = e.earnedAt || true; });
+      var stats = dice.stats || {};
+      $('dice-rolls').textContent = String(stats.rolls || 0);
+      $('dice-wins').textContent = String(stats.wins || 0);
+      $('dice-ach').textContent = defs.filter(function (d) { return have[d.id]; }).length + '/' + defs.length;
+      $('dice-badges').replaceChildren.apply($('dice-badges'), defs.map(function (d) {
+        var li = document.createElement('li');
+        li.className = have[d.id] ? 'earned' : 'locked';
+        li.title = d.name + ': ' + (d.description || '') + (have[d.id] ? '' : ' (not yet)');
+        var icon = document.createElement('span');
+        icon.className = 'badge-icon';
+        icon.textContent = d.icon || '🎲';
+        var name = document.createElement('span');
+        name.className = 'badge-name';
+        name.textContent = d.name;
+        li.appendChild(icon);
+        li.appendChild(name);
+        return li;
+      }));
+      $('account-dice').hidden = false;
+    });
+  }
   var serverState = null;
 
   /** The House Tandem Discord: a member tick, or the invite. Hidden without Discord linked. */
@@ -88,7 +121,7 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     render(null);
-    if (A.signedIn) A.refresh().then(function (me) { lastMe = me; render(me); checkServer(); });
+    if (A.signedIn) A.refresh().then(function (me) { lastMe = me; render(me); checkServer(); renderDice(); });
     // Back from joining in another tab: check again.
     window.addEventListener('focus', function () { if (A.signedIn && serverState === false) checkServer(); });
 

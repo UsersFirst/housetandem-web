@@ -149,7 +149,27 @@
 
   load();
   var cameBack = takeRedirect();
+  // Signed in, a link to another House Tandem site opens it signed in too:
+  // a one-time code rides along (the session itself never goes in a URL).
+  var HANDOFF_HOSTS = ['dice.housetandem.com'];
+  function handoffLinks(e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+    if (!a || !state.token || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var url;
+    try { url = new URL(a.href); } catch (err) { return; }
+    if (url.protocol !== 'https:' || HANDOFF_HOSTS.indexOf(url.host) < 0) return;
+    e.preventDefault();
+    var newTab = a.target === '_blank';
+    var win = newTab ? window.open('', '_blank') : null;
+    var go = function (href) { if (win) win.location.href = href; else location.assign(href); };
+    api('/auth/handoff', { method: 'POST' }).then(function (d) {
+      if (d.code) url.searchParams.set('ht_code', d.code);
+      go(url.toString());
+    }, function () { go(a.href); });
+  }
+
   listeners.push(renderNav);
+  document.addEventListener('click', handoffLinks);
   document.addEventListener('DOMContentLoaded', function () {
     renderNav();
     if (state.token) refresh();
@@ -166,6 +186,8 @@
     link: goSignIn,
     signOut: signOut,
     deleteAccount: deleteAccount,
+    /** Achievements and stats in the other House Tandem games: { dice: { earned: [{id, earnedAt}], stats } } */
+    games: function () { return state.token ? api('/me/games').then(function (d) { return d.games || {}; }) : Promise.resolve({}); },
     /** Is the linked Discord in the House Tandem server? { linked, member: true|false|null, invite } */
     discordMembership: function () { return state.token ? api('/me/discord') : Promise.resolve(null); },
     onChange: function (fn) { listeners.push(fn); },

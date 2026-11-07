@@ -155,6 +155,13 @@
 .account-server-not { font-size: 0.9rem; color: var(--text-muted); }
 .btn.account-server-join { background: #5865f2; color: #fff; font-size: 0.95rem; padding: 0.6rem 1.2rem; }
 .btn.account-server-join:hover { background: #4752c4; color: #fff; }
+.account-game[hidden] { display: none; }
+.account-badges { list-style: none; padding: 0; margin: 0.9rem 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(4.6rem, 1fr)); gap: 0.5rem; }
+.account-badges li { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; text-align: center; padding: 0.45rem 0.25rem; border-radius: 10px; border: 1px solid var(--border-color); }
+.account-badges .badge-icon { font-size: 1.45rem; line-height: 1; }
+.account-badges .badge-name { font-size: 0.68rem; line-height: 1.15; color: var(--text-secondary); }
+.account-badges li.earned { border-color: var(--accent-green); background: rgba(68, 255, 102, 0.06); }
+.account-badges li.locked { opacity: 0.38; filter: grayscale(1); }
 .account-danger { width: 100%; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
 .account-danger h2 { font-size: 1rem; color: #ff7a7a; }
 .account-danger p { color: var(--text-muted); font-size: 0.88rem; max-width: 40ch; }
