@@ -67,7 +67,11 @@
           <a class="btn account-server-join" id="account-server-join" href="https://housetandem.com/discord" target="_blank" rel="noopener" data-ht="social:discord_account" hidden>Join the House Tandem Discord</a>
         </div>
 
-        <div class="account-game">
+        <p class="account-summary" id="account-summary" hidden></p>
+
+        <!-- Every game's card has the same parts: head, time played + last played, achievements, headline stats.
+             Tandemonium's is here; the others are built by js/account-page.js (GAMES). -->
+        <div class="account-game" id="account-tandemonium">
           <div class="account-game-head">
             <img src="images/game/hero_geese.jpg" alt="" width="96" height="54">
             <div>
@@ -75,10 +79,18 @@
               <a href="https://tandemonium.housetandem.com" data-ht="play:tandemonium_account">Play in browser &rarr;</a>
             </div>
           </div>
-          <div class="account-stats" id="account-stats">
+          <dl class="account-play" id="tandemonium-play" hidden>
+            <div><dt>Time played</dt><dd id="tandemonium-time">–</dd></div>
+            <div><dt>Last played</dt><dd id="tandemonium-last">–</dd></div>
+          </dl>
+          <div class="account-ach-open account-ach-static">
+            <b id="stat-ach">–</b><span>achievements</span>
+          </div>
+          <div class="account-stats account-stats-small" id="account-stats">
+            <div id="stat-distance-cell" hidden><b id="stat-distance">–</b><span>ridden</span></div>
             <div><b id="stat-rides">–</b><span>rides</span></div>
-            <div><b id="stat-ach">–</b><span>achievements</span></div>
             <div><b id="stat-best">–</b><span>best to Grandma’s</span></div>
+            <div id="stat-days-cell" hidden><b id="stat-days">–</b><span>days ridden</span></div>
           </div>
         </div>
 
@@ -113,7 +125,8 @@
           <ul>
             <li>Your account and its linked sign-ins: <span id="delete-signins">Discord and Steam</span></li>
             <li>Every Tandemonium ride and leaderboard time (<span id="delete-rides">all</span>)</li>
-            <li>Your achievements (<span id="delete-ach">all</span>)</li>
+            <li>Your achievements (<span id="delete-ach">all</span>) and lifetime stats in every House Tandem game</li>
+            <li>Your time played and when you last played, in every game</li>
             <li>Your Daily Ride results and streaks</li>
             <li>Your records with riding partners. Their own rides stay, without your name.</li>
           </ul>
