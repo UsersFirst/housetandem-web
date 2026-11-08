@@ -9,6 +9,52 @@
     var s = Math.round(ms / 1000);
     return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
   }
+  /** Seconds played → "3 h 12 m", "45 m", "under a minute"; null when never reported. */
+  function fmtPlayed(sec) {
+    sec = Math.max(0, Math.floor(Number(sec) || 0));
+    if (!sec) return null;
+    if (sec < 60) return 'under a minute';
+    var m = Math.floor(sec / 60), h = Math.floor(m / 60);
+    if (!h) return m + ' m';
+    return m % 60 && h < 100 ? h + ' h ' + (m % 60) + ' m' : h + ' h';
+  }
+
+  /** An ISO time → "today", "yesterday", "5 days ago", or a date (local calendar days). */
+  function fmtAgo(iso, now) {
+    var t = iso ? new Date(iso) : null;
+    if (!t || isNaN(t)) return null;
+    now = now || new Date();
+    var day = function (d) { return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5; };
+    var n = day(now) - day(t);
+    if (n <= 0) return 'today';
+    if (n === 1) return 'yesterday';
+    if (n < 7) return n + ' days ago';
+    var opts = { month: 'short', day: 'numeric' };
+    if (t.getFullYear() !== now.getFullYear()) opts.year = 'numeric';
+    return t.toLocaleDateString(undefined, opts);
+  }
+
+  /** Metres → "850 m" or "12.3 km". */
+  function fmtDistance(m) {
+    m = Number(m) || 0;
+    if (m < 1000) return Math.round(m) + ' m';
+    return (m / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' km';
+  }
+
+  /** A card's "Time played · Last played" row (ids <game>-play, -time, -last); hidden when the API has no playtime. */
+  function renderPlay(game, playtime) {
+    var row = $(game + '-play');
+    if (!row) return;
+    var played = playtime && fmtPlayed(playtime.seconds);
+    var last = playtime && fmtAgo(playtime.lastPlayed);
+    $(game + '-time').parentNode.hidden = !played;
+    $(game + '-last').parentNode.hidden = !last;
+    $(game + '-time').textContent = played || '';
+    $(game + '-last').textContent = last || '';
+    if (last && playtime.lastPlayed) $(game + '-last').title = new Date(playtime.lastPlayed).toLocaleString();
+    row.hidden = !played && !last;
+  }
+
 
   /** Start a sign-in or link from a button; show what went wrong if it can't start. */
   function go(btn, start) {
@@ -63,6 +109,17 @@
     titles.appendChild(play);
     head.appendChild(img);
     head.appendChild(titles);
+    var playRow = el('dl', 'account-play');
+    playRow.id = g.game + '-play';
+    playRow.hidden = true;
+    [['time', 'Time played'], ['last', 'Last played']].forEach(function (p) {
+      var row = el('div');
+      var dd = el('dd');
+      dd.id = g.game + '-' + p[0];
+      row.appendChild(el('dt', null, p[1]));
+      row.appendChild(dd);
+      playRow.appendChild(row);
+    });
     var open = el('button', 'account-ach-open');
     open.type = 'button';
     open.id = g.game + '-ach-open';
@@ -82,6 +139,7 @@
       stats.appendChild(cell);
     });
     card.appendChild(head);
+    card.appendChild(playRow);
     card.appendChild(open);
     card.appendChild(stats);
     $('account-games').appendChild(card);
@@ -106,7 +164,8 @@
       var have = {};
       (mine.earned || []).forEach(function (e) { have[e.id] = e.earnedAt || true; });
       var stats = mine.stats || {};
-      g.stats.forEach(function (s) { $(g.game + '-' + s[0]).textContent = String(stats[s[0]] || 0); });
+      g.stats.forEach(function (s) { $(g.game + '-' + s[0]).textContent = (Number(stats[s[0]]) || 0).toLocaleString(); });
+      renderPlay(g.game, mine.playtime);
       var count = $(g.game + '-ach');
       count.textContent = defs.filter(function (d) { return have[d.id]; }).length + '/' + defs.length;
       var groups = [];
@@ -123,8 +182,43 @@
     });
   }
 
+  /**
+   * Tandemonium's card from /me/games: time played, distance, rides and days
+   * ridden from the game's lifetime stats. An older API has no `tandemonium`
+   * key; then the card keeps the /me numbers (rides, best, achievements).
+   */
+  function renderTandemonium(games) {
+    var t = games && games.tandemonium;
+    renderPlay('tandemonium', t && t.playtime);
+    var stats = (t && t.stats) || {};
+    var dist = Number(stats.cumulativeDistance) || 0;
+    $('stat-distance').textContent = fmtDistance(dist);
+    $('stat-distance-cell').hidden = !dist;
+    var days = Number(stats.days) || 0;
+    $('stat-days').textContent = days.toLocaleString();
+    $('stat-days-cell').hidden = !days;
+    var rides = Number(stats.rides) || 0;
+    if (rides > (Number($('stat-rides').getAttribute('data-n')) || 0)) {
+      $('stat-rides').textContent = rides.toLocaleString();
+      $('stat-rides').setAttribute('data-n', rides);
+    }
+  }
+
+  /** "4 h 10 m played across 3 games": all the account's time, once any game reports it. */
+  function renderSummary(games) {
+    var total = 0, n = 0;
+    Object.keys(games || {}).forEach(function (k) {
+      var s = Number(games[k] && games[k].playtime && games[k].playtime.seconds) || 0;
+      if (s > 0) { total += s; n++; }
+    });
+    var line = $('account-summary');
+    line.hidden = !total;
+    line.textContent = total ? fmtPlayed(total) + ' played' + (n > 1 ? ' across ' + n + ' games' : '') : '';
+  }
+
   function renderGames() {
     var gamesP = A.games().catch(function () { return {}; });
+    gamesP.then(function (games) { renderTandemonium(games); renderSummary(games); });
     GAMES.forEach(function (g) { renderGame(g, gamesP); });
   }
   var serverState = null;
@@ -184,7 +278,8 @@
       var best = (me.bestScores || []);
       var rides = best.reduce(function (n, b) { return n + (b.rides || 0); }, 0);
       var grandma = best.filter(function (b) { return b.level_id === 'grandma'; })[0];
-      $('stat-rides').textContent = String(rides);
+      $('stat-rides').textContent = rides.toLocaleString();
+      $('stat-rides').setAttribute('data-n', rides);
       $('stat-ach').textContent = (me.achievements || []).length + '/100';
       $('stat-best').textContent = grandma ? fmtTime(grandma.best_time) : '–';
     }
