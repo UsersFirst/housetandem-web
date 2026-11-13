@@ -359,7 +359,6 @@
     $('account-profile').hidden = !user;
     if (!user) return;
 
-    $('account-name').textContent = user.name || 'House Tandem player';
     // One line per linked account: platform icon, name, picture. Plain text, not pills (they aren't buttons).
     var pics = {};
     A.pictures(user).forEach(function (p) { pics[p.provider] = p.avatar; });
