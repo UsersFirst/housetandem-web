@@ -72,7 +72,9 @@
           </li>
         </ol>
         <p class="account-error" id="account-error" role="alert" hidden></p>
-        <p class="account-note">Discord opens a blank page? Open the Discord app, check you're signed in, then come back and tap <b>Sign in with Discord</b> again.</p>
+        <!-- On a phone, Discord's web login is blank or only offers the app when you're not signed in there.
+             A direct discord.gg tap opens the invite in the Discord app instead (tools/links.json "discord"). -->
+        <p class="account-note">Discord shows a blank page or only "Download"? <a href="https://discord.gg/wX6Qs3GZK4" target="_blank" rel="noopener" data-ht="social:discord_app_fallback">Join the server in the Discord app</a> instead, then come back for step 3.</p>
         <p class="account-note">We get your Discord name and picture and add you to the House Tandem server. Never your email, messages or password.</p>
         <p class="account-alt">Already ride Tandemonium on Steam? <button class="account-link account-link-steam" id="account-steam-btn" type="button">Sign in with Steam</button></p>
       </section>
