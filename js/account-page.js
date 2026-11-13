@@ -360,13 +360,11 @@
     if (!user) return;
 
     $('account-name').textContent = user.name || 'House Tandem player';
-    $('account-avatars').replaceChildren.apply($('account-avatars'), A.pictures(user).map(function (p) {
-      var img = document.createElement('img');
-      img.src = p.avatar; img.alt = p.provider; img.referrerPolicy = 'no-referrer';
-      img.setAttribute('data-provider', p.provider);
-      img.title = p.provider === 'discord' ? 'Discord' : p.provider === 'steam' ? 'Steam' : '';
-      return img;
-    }));
+    // One line per linked account: picture, platform icon, name. Plain text, not pills (they aren't buttons).
+    var pics = {};
+    A.pictures(user).forEach(function (p) { pics[p.provider] = p.avatar; });
+    // The platform icons come from the sign-in buttons already on the page.
+    var ICON = { discord: '#account-discord-btn svg', steam: '.js-playtest svg' };
 
     var ids = user.identities || {};
     var rows = [['discord', 'Discord'], ['steam', 'Steam']].map(function (pair) {
@@ -375,7 +373,18 @@
       li.className = linked ? 'linked' : 'unlinked';
       li.setAttribute('data-provider', pair[0]);
       if (linked) {
-        li.textContent = pair[1] + ' · ' + (ids[pair[0]].name || 'linked');
+        var pic = document.createElement(pics[pair[0]] ? 'img' : 'span');
+        pic.className = 'account-id-pic';
+        if (pics[pair[0]]) { pic.src = pics[pair[0]]; pic.alt = ''; pic.referrerPolicy = 'no-referrer'; }
+        var icon = document.querySelector(ICON[pair[0]]);
+        icon = icon ? icon.cloneNode(true) : document.createElement('span');
+        icon.setAttribute('class', 'account-id-icon');
+        icon.setAttribute('width', '18'); icon.setAttribute('height', '18');
+        var name = document.createElement('span');
+        name.className = 'account-id-name';
+        name.textContent = ids[pair[0]].name || 'linked';
+        li.title = pair[1];
+        li.append(pic, icon, name);
       } else {
         var b = document.createElement('button');
         b.type = 'button';
