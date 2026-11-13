@@ -240,7 +240,7 @@
       $('account-server-member').hidden = d.member !== true || hello;
       $('account-server-hello').hidden = !hello;
       $('account-server-open').hidden = d.member !== true;
-      $('account-server-open').textContent = hello ? 'Open the House Tandem Discord' : 'Say hello in the House Tandem Discord';
+      $('account-server-open-label').textContent = hello ? 'Open the House Tandem Discord' : 'Say hello in the House Tandem Discord';
       $('account-server-join').hidden = d.member === true;
       step.classList.toggle('done', d.said_hello === null ? d.member === true : hello);
       step.hidden = false;
