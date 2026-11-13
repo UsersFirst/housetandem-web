@@ -81,9 +81,17 @@
           </li>
         </ol>
         <p class="account-error" id="account-error" role="alert" hidden></p>
-        <!-- On a phone, Discord's web login is blank or only offers the app when you're not signed in there.
-             A direct discord.gg tap opens the invite in the Discord app instead (tools/links.json "discord"). -->
-        <p class="account-note">Discord shows a blank page or only "Download"? <a href="https://discord.gg/wX6Qs3GZK4" target="_blank" rel="noopener" data-ht="social:discord_app_fallback">Join the server in the Discord app</a> instead, then come back for step 3.</p>
+        <!-- Back from Discord without being signed in (on a phone, Discord's web login is blank or only offers
+             "Download" when you're not signed in there): js/account-page.js shows this card. A direct discord.gg
+             tap opens the invite in the Discord app (tools/links.json "discord"). -->
+        <div class="account-trouble" id="discord-trouble" hidden>
+          <p><b>Discord didn't sign you in?</b> On a phone, Discord's website can show a blank page or only "Download".</p>
+          <a class="btn account-discord" href="https://discord.gg/wX6Qs3GZK4" target="_blank" rel="noopener" data-ht="social:discord_app_fallback">Open the House Tandem server in the Discord app</a>
+          <button class="account-link" id="discord-trouble-retry" type="button">Try Sign in with Discord again</button>
+          <p class="account-small">Then come back here for step 3.</p>
+        </div>
+        <p class="account-note account-inapp" id="discord-inapp" hidden>Opened from TikTok or Instagram? Signing in works best in your phone's browser: tap <b>&middot;&middot;&middot;</b> and choose <b>Open in browser</b>.</p>
+        <p class="account-note" id="discord-note">Discord shows a blank page or only "Download"? <a href="https://discord.gg/wX6Qs3GZK4" target="_blank" rel="noopener" data-ht="social:discord_app_fallback">Join the server in the Discord app</a> instead, then come back for step 3.</p>
         <p class="account-note">You choose what we get under <b>Permissions</b>. We never see your Discord messages or password.</p>
         <p class="account-alt">Already riding Tandemonium on Steam? <button class="account-link account-link-steam" id="account-steam-btn" type="button">Sign in with Steam</button></p>
       </section>

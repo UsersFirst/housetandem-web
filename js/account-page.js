@@ -284,6 +284,11 @@
   // ── Step 1: Sign in with Discord as a plain discord.com link ──
   // Made ahead of the tap: a tap on a discord.com link can open the Discord app on a phone
   // (already signed in there). Without a fresh link, the tap falls back to the usual redirect.
+  var UA = navigator.userAgent || '';
+  var MOBILE = /iPhone|iPad|iPod|Android/i.test(UA);
+  // TikTok, Instagram and Facebook open links in their own browser, where Discord's web login is least likely to work.
+  var IN_APP = /musical_ly|BytedanceWebview|TikTok|Instagram|FBAN|FBAV/i.test(UA);
+
   function wireDiscordButton() {
     var btn = $('account-discord-btn');
     var ready = function () { if (!A.signedIn) A.prepareDiscordLink().then(function (url) { if (url) btn.href = url; }); };
@@ -303,12 +308,37 @@
       ready();
     };
     Array.prototype.forEach.call(boxes, function (b) { b.addEventListener('change', onScopes); });
+    // On a phone, Discord opens in a new tab (or the Discord app) so this page stays put. If the
+    // person comes back here still signed out, Discord's web login most likely went blank: show the
+    // card that opens the server in the Discord app instead. A sign-in that finishes in the other tab
+    // lands in localStorage, and this tab picks it up.
+    if (MOBILE) { btn.target = '_blank'; btn.rel = 'noopener'; }
+    if (IN_APP) $('discord-inapp').hidden = false;
+    var started = 0;
+    var track = function (name, props) { if (window.HT) window.HT.track(name, Object.assign({ mobile: MOBILE, in_app: IN_APP }, props || {})); };
+    var stuck = function () {
+      if (!started || A.signedIn) return;
+      if (Date.now() - started < 1500) return;   // the tap itself hides the page for a moment
+      started = 0;
+      $('discord-trouble').hidden = false;
+      $('discord-note').hidden = true;
+      $('discord-trouble').scrollIntoView({ block: 'center' });
+      track('signin_discord_stuck');
+    };
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') stuck(); });
+    window.addEventListener('pageshow', function (e) { if (e.persisted) stuck(); });   // back button to a cached page
+    window.addEventListener('storage', function (e) { if (e.key === 'ht_auth_token' && e.newValue) location.reload(); });
+    $('discord-trouble-retry').addEventListener('click', function () { $('discord-trouble').hidden = true; btn.click(); });
+
     btn.addEventListener('click', function (e) {
       var url = A.freshDiscordLink();
+      started = Date.now();
+      track('signin_discord_click', { direct: !!url });
       if (url) { btn.href = url; return; }   // let the tap follow Discord's own link
       e.preventDefault();
       go(btn, A.signInWithDiscord);
     });
+    if (A.cameBack && A.signedIn) track('signin_discord_done', { server: A.serverJoin });
   }
 
   function render(me) {
