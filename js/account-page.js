@@ -223,18 +223,89 @@
   }
   var serverState = null;
 
-  /** The House Tandem Discord: a member tick, or the invite. Hidden without Discord linked. */
+  /** Step 2, the House Tandem Discord: a member tick (+ Open Discord), or the invite. Hidden without Discord linked. */
   function checkServer() {
     A.discordMembership().then(function (d) {
-      var box = $('account-server');
-      if (!d || d.__status !== 200 || !d.linked) { box.hidden = true; return; }
+      var step = $('step-server');
+      if (!d || d.__status !== 200 || !d.linked) { step.hidden = true; return; }
       serverState = d.member;
       if (d.invite) $('account-server-join').href = d.invite;
+      if (d.server_url) $('account-server-open').href = d.server_url;
       $('account-server-member').hidden = d.member !== true;
+      $('account-server-open').hidden = d.member !== true;
       $('account-server-not').hidden = d.member !== false;
       $('account-server-join').hidden = d.member === true;
-      box.hidden = false;
+      step.classList.toggle('done', d.member === true);
+      step.hidden = false;
     }).catch(function () {});
+  }
+
+  // ── Step 3: the Tandemonium playtest on Steam ──
+  // The Steam link carries this visit's UTM tags (housetandem.com/tt → ?utm_source=tiktok…) so
+  // Steamworks' UTM report still credits the post. Steam can't tell us the request was made,
+  // so the step only remembers that the page was opened.
+  var STEAM_APP = 'https://store.steampowered.com/app/4482940/';
+  var K_PLAYTEST = 'ht_playtest_opened';
+  function playtestUrl() {
+    var here = new URLSearchParams(location.search);
+    var u = new URL(STEAM_APP);
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach(function (k) {
+      var v = here.get(k);
+      if (v) u.searchParams.set(k, v.slice(0, 40));
+    });
+    if (!u.searchParams.has('utm_source')) u.searchParams.set('utm_source', 'housetandem');
+    if (!u.searchParams.has('utm_medium')) u.searchParams.set('utm_medium', 'account');
+    if (!u.searchParams.has('utm_campaign')) u.searchParams.set('utm_campaign', 'playtest');
+    return u.toString();
+  }
+  function playtestOpened() { try { return localStorage.getItem(K_PLAYTEST) === '1'; } catch (e) { return false; } }
+  function renderPlaytest() {
+    var opened = playtestOpened();
+    var hint = $('playtest-hint');
+    if (hint) hint.innerHTML = opened
+      ? '&#10003; Steam page opened. If you haven’t yet, choose <b>Request Access</b> there.'
+      : 'On the Steam page, choose <b>Request Access</b>.';
+  }
+  function wirePlaytest() {
+    var href = playtestUrl();
+    Array.prototype.forEach.call(document.querySelectorAll('.js-playtest'), function (a) {
+      a.href = href;
+      a.addEventListener('click', function () {
+        try { localStorage.setItem(K_PLAYTEST, '1'); } catch (e) {}
+        renderPlaytest();
+      });
+    });
+    renderPlaytest();
+  }
+
+  // ── Step 1: Sign in with Discord as a plain discord.com link ──
+  // Made ahead of the tap: a tap on a discord.com link can open the Discord app on a phone
+  // (already signed in there). Without a fresh link, the tap falls back to the usual redirect.
+  function wireDiscordButton() {
+    var btn = $('account-discord-btn');
+    var ready = function () { if (!A.signedIn) A.prepareDiscordLink().then(function (url) { if (url) btn.href = url; }); };
+    ready();
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && !A.signedIn && !A.freshDiscordLink()) ready();
+    });
+    // Permissions switches: ask Discord for exactly what's ticked; step 2 offers the invite when the join is off.
+    var boxes = document.querySelectorAll('.js-scope');
+    var onScopes = function () {
+      var picked = Array.prototype.filter.call(boxes, function (b) { return b.checked; }).map(function (b) { return b.value; });
+      A.setDiscordScopes(picked);
+      var join = picked.indexOf('guilds.join') >= 0;
+      $('step2-auto').hidden = !join;
+      $('step2-invite').hidden = join;
+      btn.href = 'account.html';
+      ready();
+    };
+    Array.prototype.forEach.call(boxes, function (b) { b.addEventListener('change', onScopes); });
+    btn.addEventListener('click', function (e) {
+      var url = A.freshDiscordLink();
+      if (url) { btn.href = url; return; }   // let the tap follow Discord's own link
+      e.preventDefault();
+      go(btn, A.signInWithDiscord);
+    });
   }
 
   function render(me) {
@@ -273,6 +344,9 @@
     });
     $('account-identities').replaceChildren.apply($('account-identities'), rows);
     $('account-link-note').hidden = !!(ids.steam && ids.discord);
+    $('step-signin-done').hidden = !ids.discord;
+    $('step-signin-link').hidden = !!ids.discord;
+    $('step-signin').classList.toggle('done', !!ids.discord);
 
     if (me) {
       var best = (me.bestScores || []);
@@ -292,11 +366,14 @@
     // Back from joining in another tab: check again.
     window.addEventListener('focus', function () { if (A.signedIn && serverState === false) checkServer(); });
 
-    $('account-discord-btn').addEventListener('click', function () { go(this, A.signInWithDiscord); });
+    wireDiscordButton();
+    wirePlaytest();
+    $('step-signin-link').addEventListener('click', function () { go(this, function () { return A.link('discord'); }); });
     $('account-steam-btn').addEventListener('click', function () { go(this, A.signInWithSteam); });
     $('account-signout').addEventListener('click', function () {
       A.signOut();
       render(null);
+      A.prepareDiscordLink().then(function (url) { if (url) $('account-discord-btn').href = url; });
     });
 
     // Delete: a strict warning in a dialog, and the word DELETE typed out.

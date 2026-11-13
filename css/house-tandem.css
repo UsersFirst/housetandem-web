@@ -149,6 +149,26 @@
 .account-stats span { font-size: 0.78rem; color: var(--text-muted); }
 .btn.account-signout { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); cursor: pointer; }
 .btn.account-signout:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+.account-steps { list-style: none; margin: 0.25rem 0; padding: 0; width: 100%; max-width: 26rem; display: flex; flex-direction: column; gap: 0.9rem; text-align: left; }
+.account-step { display: flex; gap: 0.85rem; align-items: flex-start; }
+.account-step[hidden] { display: none; }
+.account-step-n { flex: none; width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center; font-weight: 700;
+  border: 2px solid var(--border-color); color: var(--text-secondary); margin-top: 0.45rem; }
+.account-step.done .account-step-n { border-color: var(--accent-green); color: var(--accent-green); }
+.account-step-body { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+.account-step-text { color: var(--text-secondary); font-size: 0.92rem; margin: 0.45rem 0 0; }
+.account-step-body .btn { width: 100%; min-width: 0; justify-content: center; }
+.btn.account-playtest { display: inline-flex; align-items: center; gap: 0.6rem; background: #171a21; color: #fff; border: 1px solid #66c0f4; font-size: 1.05rem; padding: 0.85rem 1.2rem; }
+.btn.account-playtest:hover { background: #2a475e; color: #fff; }
+.btn.account-discord-small { font-size: 0.95rem; padding: 0.6rem 1rem; }
+.account-server-open { font-size: 0.9rem; }
+.account-perms { width: 100%; font-size: 0.88rem; color: var(--text-secondary); }
+.account-perms summary { cursor: pointer; color: var(--text-muted); padding: 0.2rem 0; }
+.account-perms label { display: flex; gap: 0.55rem; align-items: flex-start; padding: 0.3rem 0; }
+.account-perms input { margin-top: 0.2rem; accent-color: #5865f2; flex: none; }
+#step2-auto[hidden], #step2-invite[hidden] { display: none; }
+.account-alt { color: var(--text-muted); font-size: 0.9rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; justify-content: center; }
+.account-link-steam { border-color: #66c0f4; }
 .account-server { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
 .account-server[hidden], .account-server [hidden] { display: none; }
 .account-server-member { font-size: 0.9rem; color: var(--accent-green); border: 1px solid var(--accent-green); border-radius: 999px; padding: 0.3rem 0.9rem; }
