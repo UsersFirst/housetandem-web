@@ -266,11 +266,9 @@
     if (!u.searchParams.has('utm_campaign')) u.searchParams.set('utm_campaign', 'playtest');
     return u.toString();
   }
-  /** Step 3 is done once the account has any Tandemonium time (or a ride) on record. */
+  /** Step 3 is done once the account has played the Steam build (the worker's steamPlayed; web play doesn't count). */
   function renderPlaytestDone(t) {
-    var secs = Number(t && t.playtime && t.playtime.seconds) || 0;
-    var rides = Number(t && t.stats && t.stats.rides) || 0;
-    var playing = secs > 0 || rides > 0;
+    var playing = !!(t && t.steamPlayed);
     $('playtest-done').hidden = !playing;
     $('step-playtest').classList.toggle('done', playing);
     $('playtest-label').textContent = playing ? 'Open Tandemonium on Steam' : 'Join the free playtest on Steam';
