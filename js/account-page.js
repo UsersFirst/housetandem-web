@@ -270,7 +270,7 @@
     var playing = !!(t && t.steamPlayed);
     $('playtest-done').hidden = !playing;
     $('step-playtest').classList.toggle('done', playing);
-    $('playtest-label').textContent = playing ? 'Open Tandemonium on Steam' : 'Join the free playtest on Steam';
+    $('playtest-label').textContent = playing ? 'Play Tandemonium on Steam' : 'Join the free playtest on Steam';
     $('playtest-hint').hidden = playing;
   }
   function playtestOpened() { try { return localStorage.getItem(K_PLAYTEST) === '1'; } catch (e) { return false; } }
