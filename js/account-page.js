@@ -190,6 +190,7 @@
   function renderTandemonium(games) {
     var t = games && games.tandemonium;
     renderPlay('tandemonium', t && t.playtime);
+    renderPlaytestDone(t);
     var stats = (t && t.stats) || {};
     var dist = Number(stats.cumulativeDistance) || 0;
     $('stat-distance').textContent = fmtDistance(dist);
@@ -234,11 +235,15 @@
       serverState = d.member;
       if (d.invite) $('account-server-join').href = d.invite;
       if (HELLO_URL || d.server_url) $('account-server-open').href = HELLO_URL || d.server_url;
-      $('account-server-member').hidden = d.member !== true;
+      // Step 2 is done once they've posted in #welcome (the worker's said_hello); joined alone isn't.
+      var hello = d.member === true && d.said_hello === true;
+      $('account-server-member').hidden = d.member !== true || hello;
+      $('account-server-hello').hidden = !hello;
       $('account-server-open').hidden = d.member !== true;
+      $('account-server-open').textContent = hello ? 'Open the House Tandem Discord' : 'Say hello in the House Tandem Discord';
       $('account-server-not').hidden = d.member !== false;
       $('account-server-join').hidden = d.member === true;
-      step.classList.toggle('done', d.member === true);
+      step.classList.toggle('done', d.said_hello === null ? d.member === true : hello);
       step.hidden = false;
     }).catch(function () {});
   }
@@ -260,6 +265,16 @@
     if (!u.searchParams.has('utm_medium')) u.searchParams.set('utm_medium', 'account');
     if (!u.searchParams.has('utm_campaign')) u.searchParams.set('utm_campaign', 'playtest');
     return u.toString();
+  }
+  /** Step 3 is done once the account has any Tandemonium time (or a ride) on record. */
+  function renderPlaytestDone(t) {
+    var secs = Number(t && t.playtime && t.playtime.seconds) || 0;
+    var rides = Number(t && t.stats && t.stats.rides) || 0;
+    var playing = secs > 0 || rides > 0;
+    $('playtest-done').hidden = !playing;
+    $('step-playtest').classList.toggle('done', playing);
+    $('playtest-label').textContent = playing ? 'Open Tandemonium on Steam' : 'Join the free playtest on Steam';
+    $('playtest-hint').hidden = playing;
   }
   function playtestOpened() { try { return localStorage.getItem(K_PLAYTEST) === '1'; } catch (e) { return false; } }
   function renderPlaytest() {
