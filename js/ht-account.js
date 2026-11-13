@@ -7,7 +7,8 @@
 // Every page: a "Sign in" link in the nav, which becomes the account's pictures
 // (Discord left, Steam right) once signed in. account.html uses window.HTAccount.
 (function () {
-  var API = 'https://tandemonium-api.pete-872.workers.dev';
+  // House Tandem's own address for the API (its workers.dev address looked like phishing on Discord's consent screen).
+  var API = window.HT_API || 'https://api.housetandem.com';
   var K_TOKEN = 'ht_auth_token';
   var K_USER = 'ht_auth_user';
 
@@ -73,13 +74,33 @@
    * Go to Discord or Steam and come back to this page signed in. Already signed
    * in, it links that sign-in to this account instead (the API sees the session).
    */
-  function goSignIn(provider) {
+  function beginBody(provider) {
     var back = location.origin + location.pathname + location.search;
-    var body = provider === 'discord' ? { mode: 'redirect', return_to: back } : { return_to: back };
-    return api('/auth/' + provider + '/begin', { method: 'POST', body: body }).then(function (d) {
+    // Discord sign-in on the website also joins the House Tandem server (the consent screen says so).
+    return provider === 'discord' ? { mode: 'redirect', return_to: back, join_server: true } : { return_to: back };
+  }
+  function goSignIn(provider) {
+    return api('/auth/' + provider + '/begin', { method: 'POST', body: beginBody(provider) }).then(function (d) {
       if (d.url) { location.assign(d.url); return true; }
       throw new Error(d.error || NAMES[provider] + ' sign-in is unavailable right now');
     });
+  }
+
+  /**
+   * Discord's own consent-screen address, made ahead of the tap so the button can
+   * be a plain discord.com link: a tap on one can open the Discord app on a phone,
+   * already signed in, where our redirect would land on Discord's web login.
+   * Good for 8 minutes (the request lives 10). → Promise<string|null>
+   */
+  var discordLink = { url: null, at: 0 };
+  function prepareDiscordLink() {
+    return api('/auth/discord/begin', { method: 'POST', body: beginBody('discord') }).then(function (d) {
+      discordLink = d.authorize_url ? { url: d.authorize_url, at: Date.now() } : { url: null, at: 0 };
+      return discordLink.url;
+    }, function () { discordLink = { url: null, at: 0 }; return null; });
+  }
+  function freshDiscordLink() {
+    return discordLink.url && Date.now() - discordLink.at < 8 * 60 * 1000 ? discordLink.url : null;
   }
   function signInWithDiscord() { return goSignIn('discord'); }
   function signInWithSteam() { return goSignIn('steam'); }
@@ -98,12 +119,16 @@
     save();
   }
 
-  // Back from Discord or Steam: #ht_auth=<token>. Take it off the URL straight away.
+  // Back from Discord or Steam: #ht_auth=<token> (and from Discord, &ht_server=added|already|failed).
+  // Take them off the URL straight away.
+  var serverJoin = null;
   function takeRedirect() {
     if (!location.hash || location.hash.indexOf('ht_auth=') < 0) return false;
     var params = new URLSearchParams(location.hash.slice(1));
     var token = params.get('ht_auth');
+    serverJoin = params.get('ht_server');
     params.delete('ht_auth');
+    params.delete('ht_server');
     var rest = params.toString();
     try { history.replaceState(null, '', location.pathname + location.search + (rest ? '#' + rest : '')); } catch (e) {}
     if (!tokenValid(token)) return false;
@@ -179,6 +204,10 @@
     get user() { return state.user; },
     get signedIn() { return !!state.token; },
     cameBack: cameBack,
+    /** 'added' | 'already' | 'failed' | null: what signing in with Discord did about the House Tandem server. */
+    serverJoin: serverJoin,
+    prepareDiscordLink: prepareDiscordLink,
+    freshDiscordLink: freshDiscordLink,
     pictures: pictures,
     refresh: refresh,
     signInWithDiscord: signInWithDiscord,
@@ -188,7 +217,7 @@
     deleteAccount: deleteAccount,
     /** Achievements and stats in the other House Tandem games: { dice: { earned: [{id, earnedAt}], stats } } */
     games: function () { return state.token ? api('/me/games').then(function (d) { return d.games || {}; }) : Promise.resolve({}); },
-    /** Is the linked Discord in the House Tandem server? { linked, member: true|false|null, invite } */
+    /** Is the linked Discord in the House Tandem server? { linked, member: true|false|null, invite, server_url } */
     discordMembership: function () { return state.token ? api('/me/discord') : Promise.resolve(null); },
     onChange: function (fn) { listeners.push(fn); },
   };

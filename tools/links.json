@@ -1,10 +1,10 @@
 {
   "_comment": "Short links: housetandem.com/<slug> redirects to <to> with these UTM tags. Edit, then run: node tools/build-links.js",
   "links": {
-    "tt": { "to": "/", "utm_source": "tiktok", "utm_medium": "bio" },
-    "ig": { "to": "/", "utm_source": "instagram", "utm_medium": "bio" },
-    "yt": { "to": "/", "utm_source": "youtube", "utm_medium": "shorts" },
-    "x": { "to": "/", "utm_source": "x", "utm_medium": "bio" },
+    "tt": { "to": "/account.html", "utm_source": "tiktok", "utm_medium": "bio" },
+    "ig": { "to": "/account.html", "utm_source": "instagram", "utm_medium": "bio" },
+    "yt": { "to": "/account.html", "utm_source": "youtube", "utm_medium": "shorts" },
+    "x": { "to": "/account.html", "utm_source": "x", "utm_medium": "bio" },
     "dc": { "to": "/", "utm_source": "discord", "utm_medium": "server" },
     "qr": { "to": "/", "utm_source": "qr", "utm_medium": "event" },
     "playtest": { "to": "https://discord.gg/4t5xxp5Z4", "utm": false, "title": "House Tandem Discord", "_note": "Steam Playtest announcement (2026-11-07). Its own invite so Discord > Server Settings > Invites counts Steam joins. The invite expires after 30 days: then point this at the /discord invite and rebuild." },
