@@ -223,6 +223,9 @@
   }
   var serverState = null;
 
+  // Step 2's "Say hello" opens this channel in Discord (the app on a phone). Empty: the server's default channel.
+  var HELLO_URL = '';
+
   /** Step 2, the House Tandem Discord: a member tick (+ Open Discord), or the invite. Hidden without Discord linked. */
   function checkServer() {
     A.discordMembership().then(function (d) {
@@ -230,7 +233,7 @@
       if (!d || d.__status !== 200 || !d.linked) { step.hidden = true; return; }
       serverState = d.member;
       if (d.invite) $('account-server-join').href = d.invite;
-      if (d.server_url) $('account-server-open').href = d.server_url;
+      if (HELLO_URL || d.server_url) $('account-server-open').href = HELLO_URL || d.server_url;
       $('account-server-member').hidden = d.member !== true;
       $('account-server-open').hidden = d.member !== true;
       $('account-server-not').hidden = d.member !== false;
