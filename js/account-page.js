@@ -360,7 +360,7 @@
     if (!user) return;
 
     $('account-name').textContent = user.name || 'House Tandem player';
-    // One line per linked account: picture, platform icon, name. Plain text, not pills (they aren't buttons).
+    // One line per linked account: platform icon, name, picture. Plain text, not pills (they aren't buttons).
     var pics = {};
     A.pictures(user).forEach(function (p) { pics[p.provider] = p.avatar; });
     // The platform icons come from the sign-in buttons already on the page.
@@ -384,7 +384,7 @@
         name.className = 'account-id-name';
         name.textContent = ids[pair[0]].name || 'linked';
         li.title = pair[1];
-        li.append(pic, icon, name);
+        li.append(icon, name, pic);   // picture on the right
       } else {
         var b = document.createElement('button');
         b.type = 'button';

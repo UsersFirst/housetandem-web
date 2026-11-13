@@ -131,13 +131,13 @@
 .account-identities li[data-provider="steam"] .account-link { border-color: #66c0f4; }
 .account-link:hover { border-style: solid; }
 .account-link:disabled { opacity: 0.6; cursor: wait; }
-.account-identities { list-style: none; padding: 0; margin: 0 auto; display: flex; flex-direction: column; gap: 0.6rem; align-items: flex-start; width: fit-content; max-width: 100%; }
+.account-identities { list-style: none; padding: 0; margin: 0 auto; display: flex; flex-direction: column; gap: 0.6rem; align-items: stretch; width: fit-content; max-width: 100%; }
 .account-identities li { display: flex; align-items: center; gap: 0.6rem; font-size: 1rem; color: var(--text-primary); min-width: 0; }
 .account-id-pic { flex: none; width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); background: #171a21; }
 .account-identities li[data-provider="discord"] .account-id-pic { border-color: #5865f2; }
 .account-identities li[data-provider="steam"] .account-id-pic { border-color: #66c0f4; }
 .account-id-icon { flex: none; color: var(--text-secondary); }
-.account-id-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-id-name { flex: 1; min-width: 0; margin-right: 0.4rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account-game { width: 100%; text-align: left; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem; }
 .account-game-head { display: flex; gap: 0.85rem; align-items: center; margin-bottom: 0.9rem; }
 .account-game-head img { width: 96px; height: 54px; object-fit: cover; border-radius: 8px; flex: none; }
