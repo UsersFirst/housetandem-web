@@ -177,6 +177,7 @@
 .account-link-steam { border-color: #66c0f4; }
 .account-server { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
 .account-server[hidden], .account-server [hidden] { display: none; }
+.account-step-body.account-server { align-items: flex-start; }   /* in the checklist, line up with steps 1 and 3 */
 .account-server-member { font-size: 0.9rem; color: var(--accent-green); border: 1px solid var(--accent-green); border-radius: 999px; padding: 0.3rem 0.9rem; }
 .account-server-not { font-size: 0.9rem; color: var(--text-muted); }
 .btn.account-server-join { background: #5865f2; color: #fff; font-size: 0.95rem; padding: 0.6rem 1.2rem; }
