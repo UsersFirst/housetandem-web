@@ -224,10 +224,10 @@
   }
   var serverState = null;
 
-  // Step 2's "Say hello" opens #welcome in Discord (the app on a phone). Empty: the server's default channel.
+  // Step 3's "Say hello" opens #welcome in Discord (the app on a phone). Empty: the server's default channel.
   var HELLO_URL = 'https://discord.com/channels/1560085412838379560/1560085413719187517';   // #welcome
 
-  /** Step 2, the House Tandem Discord: a member tick (+ Open Discord), or the invite. Hidden without Discord linked. */
+  /** Step 3, the House Tandem Discord: a member tick (+ Open Discord), or the invite. Hidden without Discord linked. */
   function checkServer() {
     A.discordMembership().then(function (d) {
       var step = $('step-server');
@@ -235,20 +235,19 @@
       serverState = d.member;
       if (d.invite) $('account-server-join').href = d.invite;
       if (HELLO_URL || d.server_url) $('account-server-open').href = HELLO_URL || d.server_url;
-      // Step 2 is done once they've posted in #welcome (the worker's said_hello); joined alone isn't.
+      // Step 3 is done once they've posted in #welcome (the worker's said_hello); joined alone isn't.
       var hello = d.member === true && d.said_hello === true;
       $('account-server-member').hidden = d.member !== true || hello;
       $('account-server-hello').hidden = !hello;
       $('account-server-open').hidden = d.member !== true;
       $('account-server-open').textContent = hello ? 'Open the House Tandem Discord' : 'Say hello in the House Tandem Discord';
-      $('account-server-not').hidden = d.member !== false;
       $('account-server-join').hidden = d.member === true;
       step.classList.toggle('done', d.said_hello === null ? d.member === true : hello);
       step.hidden = false;
     }).catch(function () {});
   }
 
-  // ── Step 3: the Tandemonium playtest on Steam ──
+  // ── Step 2: the Tandemonium playtest on Steam ──
   // The Steam link carries this visit's UTM tags (housetandem.com/tt → ?utm_source=tiktok…) so
   // Steamworks' UTM report still credits the post. Steam can't tell us the request was made,
   // so the step only remembers that the page was opened.
@@ -266,7 +265,7 @@
     if (!u.searchParams.has('utm_campaign')) u.searchParams.set('utm_campaign', 'playtest');
     return u.toString();
   }
-  /** Step 3 is done once the account has played the Steam build (the worker's steamPlayed; web play doesn't count). */
+  /** Step 2 is done once the account has played the Steam build (the worker's steamPlayed; web play doesn't count). */
   function renderPlaytestDone(t) {
     var playing = !!(t && t.steamPlayed);
     $('playtest-done').hidden = !playing;
@@ -309,7 +308,7 @@
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'visible' && !A.signedIn && !A.freshDiscordLink()) ready();
     });
-    // Permissions switches: ask Discord for exactly what's ticked; step 2 offers the invite when the join is off.
+    // Permissions switches: ask Discord for exactly what's ticked; step 3 offers the invite when the join is off.
     var boxes = document.querySelectorAll('.js-scope');
     var onScopes = function () {
       var picked = Array.prototype.filter.call(boxes, function (b) { return b.checked; }).map(function (b) { return b.value; });
