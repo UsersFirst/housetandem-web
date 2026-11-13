@@ -223,8 +223,8 @@
   }
   var serverState = null;
 
-  // Step 2's "Say hello" opens this channel in Discord (the app on a phone). Empty: the server's default channel.
-  var HELLO_URL = '';
+  // Step 2's "Say hello" opens #welcome in Discord (the app on a phone). Empty: the server's default channel.
+  var HELLO_URL = 'https://discord.com/channels/1560085412838379560/1560085413719187517';   // #welcome
 
   /** Step 2, the House Tandem Discord: a member tick (+ Open Discord), or the invite. Hidden without Discord linked. */
   function checkServer() {
