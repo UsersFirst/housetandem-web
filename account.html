@@ -52,12 +52,21 @@
                 <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.028C.533 9.046-.32 13.58.099 18.058a.082.082 0 0 0 .031.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.029 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.055c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.029zM8.02 15.331c-1.182 0-2.157-1.086-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.332-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.332-.946 2.418-2.157 2.418z"/></svg>
                 Sign in with Discord
               </a>
+              <!-- What the Discord sign-in asks for. Name and picture are needed; the rest can be switched off. -->
+              <details class="account-perms">
+                <summary>Permissions</summary>
+                <label><input type="checkbox" checked disabled> Your Discord name and picture (needed to sign in)</label>
+                <label><input type="checkbox" class="js-scope" value="guilds.join" checked> Join the House Tandem Discord server</label>
+                <label><input type="checkbox" class="js-scope" value="email" checked> Your email, for new game news (we never sell it or spam you)</label>
+                <label><input type="checkbox" class="js-scope" value="connections" checked> Your linked accounts, to connect your Steam achievements automatically</label>
+              </details>
             </div>
           </li>
           <li class="account-step">
             <span class="account-step-n" aria-hidden="true">2</span>
             <div class="account-step-body">
-              <p class="account-step-text"><b>Join the House Tandem Discord.</b> Signing in does this for you.</p>
+              <p class="account-step-text"><b>Join the House Tandem Discord.</b> <span id="step2-auto">Signing in does this for you.</span>
+                <a id="step2-invite" href="https://discord.gg/wX6Qs3GZK4" target="_blank" rel="noopener" data-ht="social:discord_step2" hidden>Join the server</a></p>
             </div>
           </li>
           <li class="account-step">
@@ -75,7 +84,7 @@
         <!-- On a phone, Discord's web login is blank or only offers the app when you're not signed in there.
              A direct discord.gg tap opens the invite in the Discord app instead (tools/links.json "discord"). -->
         <p class="account-note">Discord shows a blank page or only "Download"? <a href="https://discord.gg/wX6Qs3GZK4" target="_blank" rel="noopener" data-ht="social:discord_app_fallback">Join the server in the Discord app</a> instead, then come back for step 3.</p>
-        <p class="account-note">We get your Discord name and picture and add you to the House Tandem server. Never your email, messages or password.</p>
+        <p class="account-note">You choose what we get under <b>Permissions</b>. We never see your Discord messages or password.</p>
         <p class="account-alt">Already ride Tandemonium on Steam? <button class="account-link account-link-steam" id="account-steam-btn" type="button">Sign in with Steam</button></p>
       </section>
 

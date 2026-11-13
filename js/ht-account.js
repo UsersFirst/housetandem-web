@@ -74,10 +74,16 @@
    * Go to Discord or Steam and come back to this page signed in. Already signed
    * in, it links that sign-in to this account instead (the API sees the session).
    */
+  // What a Discord sign-in asks for beyond name and picture (the Permissions switches on account.html):
+  // join the House Tandem server, email for new game news, linked accounts for Steam achievements.
+  var discordScopes = ['guilds.join', 'email', 'connections'];
   function beginBody(provider) {
     var back = location.origin + location.pathname + location.search;
-    // Discord sign-in on the website also joins the House Tandem server (the consent screen says so).
-    return provider === 'discord' ? { mode: 'redirect', return_to: back, join_server: true } : { return_to: back };
+    return provider === 'discord' ? { mode: 'redirect', return_to: back, scopes: discordScopes.slice() } : { return_to: back };
+  }
+  function setDiscordScopes(list) {
+    discordScopes = (list || []).slice();
+    discordLink = { url: null, at: 0, key: '' };   // the prepared link asked for the old set
   }
   function goSignIn(provider) {
     return api('/auth/' + provider + '/begin', { method: 'POST', body: beginBody(provider) }).then(function (d) {
@@ -92,15 +98,17 @@
    * already signed in, where our redirect would land on Discord's web login.
    * Good for 8 minutes (the request lives 10). → Promise<string|null>
    */
-  var discordLink = { url: null, at: 0 };
+  var discordLink = { url: null, at: 0, key: '' };
   function prepareDiscordLink() {
+    var key = discordScopes.join(' ');
     return api('/auth/discord/begin', { method: 'POST', body: beginBody('discord') }).then(function (d) {
-      discordLink = d.authorize_url ? { url: d.authorize_url, at: Date.now() } : { url: null, at: 0 };
+      if (key !== discordScopes.join(' ')) return null;   // switches changed while this was on its way
+      discordLink = d.authorize_url ? { url: d.authorize_url, at: Date.now(), key: key } : { url: null, at: 0, key: '' };
       return discordLink.url;
-    }, function () { discordLink = { url: null, at: 0 }; return null; });
+    }, function () { discordLink = { url: null, at: 0, key: '' }; return null; });
   }
   function freshDiscordLink() {
-    return discordLink.url && Date.now() - discordLink.at < 8 * 60 * 1000 ? discordLink.url : null;
+    return discordLink.url && discordLink.key === discordScopes.join(' ') && Date.now() - discordLink.at < 8 * 60 * 1000 ? discordLink.url : null;
   }
   function signInWithDiscord() { return goSignIn('discord'); }
   function signInWithSteam() { return goSignIn('steam'); }
@@ -207,6 +215,7 @@
     /** 'added' | 'already' | 'failed' | null: what signing in with Discord did about the House Tandem server. */
     serverJoin: serverJoin,
     prepareDiscordLink: prepareDiscordLink,
+    setDiscordScopes: setDiscordScopes,
     freshDiscordLink: freshDiscordLink,
     pictures: pictures,
     refresh: refresh,

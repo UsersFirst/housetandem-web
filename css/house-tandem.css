@@ -162,6 +162,11 @@
 .btn.account-playtest:hover { background: #2a475e; color: #fff; }
 .btn.account-discord-small { font-size: 0.95rem; padding: 0.6rem 1rem; }
 .account-server-open { font-size: 0.9rem; }
+.account-perms { width: 100%; font-size: 0.88rem; color: var(--text-secondary); }
+.account-perms summary { cursor: pointer; color: var(--text-muted); padding: 0.2rem 0; }
+.account-perms label { display: flex; gap: 0.55rem; align-items: flex-start; padding: 0.3rem 0; }
+.account-perms input { margin-top: 0.2rem; accent-color: #5865f2; flex: none; }
+#step2-auto[hidden], #step2-invite[hidden] { display: none; }
 .account-alt { color: var(--text-muted); font-size: 0.9rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; justify-content: center; }
 .account-link-steam { border-color: #66c0f4; }
 .account-server { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }

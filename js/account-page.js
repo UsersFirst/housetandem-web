@@ -288,6 +288,18 @@
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'visible' && !A.signedIn && !A.freshDiscordLink()) ready();
     });
+    // Permissions switches: ask Discord for exactly what's ticked; step 2 offers the invite when the join is off.
+    var boxes = document.querySelectorAll('.js-scope');
+    var onScopes = function () {
+      var picked = Array.prototype.filter.call(boxes, function (b) { return b.checked; }).map(function (b) { return b.value; });
+      A.setDiscordScopes(picked);
+      var join = picked.indexOf('guilds.join') >= 0;
+      $('step2-auto').hidden = !join;
+      $('step2-invite').hidden = join;
+      btn.href = 'account.html';
+      ready();
+    };
+    Array.prototype.forEach.call(boxes, function (b) { b.addEventListener('change', onScopes); });
     btn.addEventListener('click', function (e) {
       var url = A.freshDiscordLink();
       if (url) { btn.href = url; return; }   // let the tap follow Discord's own link
