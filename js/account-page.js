@@ -69,7 +69,7 @@
     });
   }
 
-  var NAME = { discord: 'Discord', steam: 'Steam' };
+  var NAME = { discord: 'Discord', steam: 'Steam', google: 'Google' };
 
   /**
    * "Confirm it's you": linking needs a sign-in from the last 10 minutes. Sign in again with
@@ -156,8 +156,8 @@
       list.forEach(function (n) {
         var li = el('li', n.seen ? 'seen' : 'new');
         var what = n.kind === 'combine'
-          ? 'The account “' + (n.from_name || NAME[n.provider]) + '” was combined into this one on ' + day(n.created_at) + '.'
-          : (NAME[n.provider] || 'A sign-in') + ' “' + (n.login_name || '') + '” was linked on ' + day(n.created_at) + '.';
+          ? 'The ' + (NAME[n.provider] || '') + ' account “' + (n.from_name || n.login_name || '') + '” was combined into this one on ' + day(n.created_at) + '.'
+          : 'The ' + (NAME[n.provider] || '') + ' account “' + (n.login_name || '') + '” was linked to this account on ' + day(n.created_at) + '.';
         li.appendChild(el('p', null, what + ' Not you? You can undo it until ' + day(n.undo_until) + '.'));
         var undo = el('button', 'account-link', n.kind === 'combine' ? 'Separate them' : 'Remove it');
         undo.type = 'button';
