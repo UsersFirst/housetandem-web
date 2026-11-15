@@ -38,7 +38,9 @@
   <main class="page-content">
     <div class="container account-page">
 
-      <!-- Signed out: the three steps, in order (Discord sign-in, the Steam playtest, hello in the server). Hello comes last so it never looks like a gate in front of the playtest. -->
+      <!-- Signed out: the steps, in order (Discord sign-in, link Steam, the Steam playtest, hello in the server). Steam is linked
+           before the playtest so the game finds this account (no second account to combine later). Hello comes last so it
+           never looks like a gate in front of the playtest. -->
       <section class="account-card" id="account-signin" hidden>
         <img src="images/logos/housetandem-logo.svg" alt="" class="account-logo" width="2058" height="916">
         <h1>Join House Tandem</h1>
@@ -65,6 +67,12 @@
           <li class="account-step">
             <span class="account-step-n" aria-hidden="true">2</span>
             <div class="account-step-body">
+              <p class="account-step-text"><b>Link your Steam account.</b> Then the playtest keeps your rides and achievements on this account.</p>
+            </div>
+          </li>
+          <li class="account-step">
+            <span class="account-step-n" aria-hidden="true">3</span>
+            <div class="account-step-body">
               <a class="btn account-playtest js-playtest" href="https://store.steampowered.com/app/4482940/" target="_blank" rel="noopener" data-ht="playtest:steam_account">
                 <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.29-.249-1.878-.03l1.523.63c.956.4 1.409 1.5 1.009 2.455-.397.957-1.497 1.41-2.454 1.012H7.54zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.663 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.253 0-2.265-1.014-2.265-2.265z"/></svg>
                 Join the free playtest on Steam
@@ -73,7 +81,7 @@
             </div>
           </li>
           <li class="account-step">
-            <span class="account-step-n" aria-hidden="true">3</span>
+            <span class="account-step-n" aria-hidden="true">4</span>
             <div class="account-step-body">
               <p class="account-step-text"><b>The House Tandem Discord.</b> <span id="step2-auto">Signing in adds you to the server, then come say hello.</span>
                 <span id="step2-invite" hidden><a href="https://discord.gg/wX6Qs3GZK4" target="_blank" rel="noopener" data-ht="social:discord_step2">Join the server</a>, then come say hello.</span></p>
@@ -102,6 +110,17 @@
         <h1>Your House Tandem profile</h1>
         <ul class="account-identities" id="account-identities"></ul>
         <p class="account-error" id="account-link-error" role="alert" hidden></p>
+        <p class="account-ok" id="account-link-ok" role="status" hidden></p>
+        <!-- Linking needs a sign-in from the last 10 minutes (Tandemonium #612). -->
+        <div class="account-fresh" id="account-fresh" role="alert" hidden>
+          <p><b>Confirm it's you.</b> For your safety, sign in again before linking another account.</p>
+          <button class="btn account-discord account-discord-small" id="account-fresh-btn" type="button">Sign in again</button>
+        </div>
+        <!-- A sign-in linked or an account combined in, in the last 7 days: each can be undone. -->
+        <div class="account-notices" id="account-notices" hidden>
+          <h2>Recent changes to your account</h2>
+          <ul id="account-notice-list"></ul>
+        </div>
         <ol class="account-steps account-steps-done" id="account-checklist">
           <li class="account-step" id="step-signin">
             <span class="account-step-n" aria-hidden="true">1</span>
@@ -110,8 +129,16 @@
               <button class="btn account-discord account-discord-small" id="step-signin-link" type="button" hidden>Link Discord to join the House Tandem server</button>
             </div>
           </li>
-          <li class="account-step" id="step-playtest">
+          <li class="account-step" id="step-steam">
             <span class="account-step-n" aria-hidden="true">2</span>
+            <div class="account-step-body">
+              <span class="account-server-member" id="step-steam-done" hidden>&#10003; Steam linked</span>
+              <button class="btn account-playtest account-discord-small" id="step-steam-link" type="button" hidden>Link your Steam account</button>
+              <p class="account-step-text" id="step-steam-hint" hidden>Link Steam before you play, so the playtest keeps your rides on this account.</p>
+            </div>
+          </li>
+          <li class="account-step" id="step-playtest">
+            <span class="account-step-n" aria-hidden="true">3</span>
             <div class="account-step-body">
               <span class="account-server-member" id="playtest-done" hidden>&#10003; Playing the playtest</span>
               <a class="btn account-playtest js-playtest" href="https://store.steampowered.com/app/4482940/" target="_blank" rel="noopener" data-ht="playtest:steam_account">
@@ -122,7 +149,7 @@
             </div>
           </li>
           <li class="account-step" id="step-server" hidden>
-            <span class="account-step-n" aria-hidden="true">3</span>
+            <span class="account-step-n" aria-hidden="true">4</span>
             <div class="account-step-body account-server" id="account-server">
               <span class="account-server-member" id="account-server-member" hidden>&#10003; Joined the Discord</span>
               <span class="account-server-member" id="account-server-hello" hidden>&#10003; Said hello in Discord</span>
@@ -168,7 +195,7 @@
         <!-- One card per House Tandem game with achievements (js/account-page.js GAMES). -->
         <div id="account-games"></div>
 
-        <p class="account-note" id="account-link-note" hidden>Link the other one and it joins this account: rides, achievements and both pictures. If it already had its own account, the two become one.</p>
+        <p class="account-note" id="account-link-note" hidden>Link the other one and it joins this account: rides, achievements and both pictures. If it already has its own account, you'll see both and choose whether to combine them.</p>
         <button class="btn account-signout" id="account-signout" type="button">Sign out</button>
 
         <div class="account-danger">
@@ -187,6 +214,25 @@
 
       <!-- Each game's full list and badge cards (@usersfirst/ui uf-achievement-sheet), added by js/account-page.js. -->
       <div id="account-sheets"></div>
+
+      <!-- Linking a sign-in that already has its own account: both accounts, and the player chooses (Tandemonium #612). -->
+      <dialog class="account-dialog" id="account-combine-dialog" aria-labelledby="combine-title">
+        <form method="dialog">
+          <h2 id="combine-title">This <span id="combine-provider">Steam</span> account already has its own House Tandem account</h2>
+          <div class="account-combine">
+            <div class="account-combine-card" id="combine-other"></div>
+            <div class="account-combine-arrow" aria-hidden="true">&rarr;</div>
+            <div class="account-combine-card" id="combine-into"></div>
+          </div>
+          <p>Combine it into <b id="combine-into-name">this account</b>? Rides, achievements and progress in every House Tandem game are kept from both, and both sign-ins open the combined account. You can separate them again for 7 days.</p>
+          <p class="account-small">Changed your mind later? You can separate them again for 7 days, here on your profile.</p>
+          <p class="account-error" id="combine-error" role="alert" hidden></p>
+          <div class="account-dialog-buttons">
+            <button type="button" class="btn account-signout" id="combine-cancel">Cancel</button>
+            <button type="button" class="btn" id="combine-ok">Combine</button>
+          </div>
+        </form>
+      </dialog>
 
       <dialog class="account-dialog" id="account-delete-dialog" aria-labelledby="delete-title">
         <form method="dialog" id="account-delete-form">

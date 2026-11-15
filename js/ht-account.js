@@ -50,7 +50,7 @@
   function api(path, opts) {
     opts = opts || {};
     var headers = { 'Content-Type': 'application/json' };
-    if (state.token) headers.Authorization = 'Bearer ' + state.token;
+    if (state.token && !opts.noAuth) headers.Authorization = 'Bearer ' + state.token;
     return fetch(API + path, { method: opts.method || 'GET', headers: headers, body: opts.body ? JSON.stringify(opts.body) : undefined })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { d.__status = r.status; return d; }); });
   }
@@ -85,10 +85,95 @@
     discordScopes = (list || []).slice();
     discordLink = { url: null, at: 0, key: '' };   // the prepared link asked for the old set
   }
-  function goSignIn(provider) {
-    return api('/auth/' + provider + '/begin', { method: 'POST', body: beginBody(provider) }).then(function (d) {
-      if (d.url) { location.assign(d.url); return true; }
+  /**
+   * Linking (signed in) needs a sign-in to this account from the last 10 minutes; an
+   * older session gets an error with `fresh: true` (the page offers "Sign in again").
+   * The link's secret stays in this browser: only it can finish the link (Tandemonium #612).
+   */
+  var K_LINK = 'ht_link_pending';
+  function goSignIn(provider, opts) {
+    opts = opts || {};
+    var linking = !!state.token && !opts.signIn;
+    return api('/auth/' + provider + '/begin', { method: 'POST', body: beginBody(provider), noAuth: !linking }).then(function (d) {
+      if (d.__status === 401 && d.code === 'fresh_signin') {
+        var e = new Error(d.error || 'For your safety, sign in again before linking another account.');
+        e.fresh = true; e.provider = provider;
+        throw e;
+      }
+      if (d.url) {
+        if (linking && d.secret) store(K_LINK, JSON.stringify({ id: d.id, secret: d.secret, at: Date.now() }));
+        location.assign(d.url);
+        return true;
+      }
       throw new Error(d.error || NAMES[provider] + ' sign-in is unavailable right now');
+    });
+  }
+
+  /**
+   * "Confirm it's you": sign in again with one of this account's own sign-ins, then carry
+   * on with `then` ('link:steam' / 'link:discord') if it came back as the same account.
+   */
+  var K_AFTER = 'ht_after_signin';
+  function signInAgain(provider, then) {
+    var c = state.token && claims(state.token);
+    store(K_AFTER, JSON.stringify({ sub: c ? c.sub : null, then: then || null, at: Date.now() }));
+    return goSignIn(provider, { signIn: true });
+  }
+
+  function applySession(d) {
+    if (!d || !d.token) return;
+    state.token = d.token;
+    var u = d.user || {};
+    state.user = { id: u.id, name: u.name, avatar: u.avatar, identities: u.identities || {} };
+    save();
+  }
+  function pendingSecret(id) {
+    var p = null;
+    try { p = JSON.parse(read(K_LINK) || 'null'); } catch (e) {}
+    return p && p.id === id && Date.now() - p.at < 10 * 60 * 1000 ? p.secret : null;
+  }
+
+  /**
+   * Back from Discord or Steam with #ht_link=<id>.<code>: finish the link this browser began.
+   * → { status: 'linked' } | { status: 'combine', id, provider, login, into, other } | { status: 'error', error }
+   */
+  function completeLink(link) {
+    var secret = pendingSecret(link.id);
+    if (!secret || !state.token) {
+      return Promise.resolve({ status: 'error', error: 'That link was started in another browser or tab. Start it again here, from your profile.' });
+    }
+    return api('/auth/link/complete', { method: 'POST', body: { id: link.id, code: link.code, secret: secret } }).then(function (d) {
+      if (d.status === 'linked') { store(K_LINK, null); applySession(d); return { status: 'linked', steamHasAccount: !!d.steam_has_account }; }
+      if (d.status === 'combine') return { status: 'combine', id: link.id, provider: d.provider, login: d.login, into: d.into, other: d.other };
+      store(K_LINK, null);
+      return { status: 'error', error: d.error || 'That link has expired. Start it again from your profile.' };
+    }, function () { return { status: 'error', error: 'Offline. Start the link again from your profile.' }; });
+  }
+
+  /** The combine screen's answer. ok: true combines the two accounts. → { status: 'combined' | 'cancelled' } */
+  function combine(id, ok) {
+    var secret = pendingSecret(id);
+    store(K_LINK, null);
+    if (!secret) return Promise.reject(new Error('That link has expired. Start it again from your profile.'));
+    return api('/auth/link/combine', { method: 'POST', body: { id: id, secret: secret, ok: ok === true } }).then(function (d) {
+      if (d.status === 'combined') { applySession(d); return d; }
+      if (d.status === 'cancelled') return d;
+      throw new Error(d.error || 'That link has expired. Start it again from your profile.');
+    });
+  }
+
+  /** What was linked to or combined into this account in the last 7 days (each can be undone). */
+  function notices() {
+    if (!state.token) return Promise.resolve([]);
+    return api('/me/notices').then(function (d) { return d.notices || []; }, function () { return []; });
+  }
+  function noticeSeen(id) { return api('/me/notices/seen', { method: 'POST', body: { id: id } }); }
+  /** Remove a linked sign-in / separate a combined account. signed_out: this session ended with it. */
+  function undoNotice(id) {
+    return api('/me/notices/undo', { method: 'POST', body: { id: id } }).then(function (d) {
+      if (!d.undone) throw new Error(d.error || 'That could not be undone.');
+      if (d.signed_out) signOut();
+      return d;
     });
   }
 
@@ -110,8 +195,8 @@
   function freshDiscordLink() {
     return discordLink.url && discordLink.key === discordScopes.join(' ') && Date.now() - discordLink.at < 8 * 60 * 1000 ? discordLink.url : null;
   }
-  function signInWithDiscord() { return goSignIn('discord'); }
-  function signInWithSteam() { return goSignIn('steam'); }
+  function signInWithDiscord() { return goSignIn('discord', { signIn: true }); }
+  function signInWithSteam() { return goSignIn('steam', { signIn: true }); }
 
   /** Delete the account and everything on it; the server needs the typed word. */
   function deleteAccount(confirmWord) {
@@ -129,21 +214,37 @@
 
   // Back from Discord or Steam: #ht_auth=<token> (and from Discord, &ht_server=added|already|failed).
   // Take them off the URL straight away.
+  // Back from a link: #ht_link=<id>.<code> (no session in the URL); js finishes it with the secret.
+  // Back from a Discord sign-in whose verified Steam has its own account: &ht_steam=has_account.
   var serverJoin = null;
+  var pendingLink = null;
+  var steamHasAccount = false;
+  var afterSignIn = null;
   function takeRedirect() {
-    if (!location.hash || location.hash.indexOf('ht_auth=') < 0) return false;
+    if (!location.hash || !/ht_(auth|link)=/.test(location.hash)) return false;
     var params = new URLSearchParams(location.hash.slice(1));
     var token = params.get('ht_auth');
+    var link = params.get('ht_link');
     serverJoin = params.get('ht_server');
-    params.delete('ht_auth');
-    params.delete('ht_server');
+    steamHasAccount = params.get('ht_steam') === 'has_account';
+    ['ht_auth', 'ht_link', 'ht_server', 'ht_steam'].forEach(function (k) { params.delete(k); });
     var rest = params.toString();
     try { history.replaceState(null, '', location.pathname + location.search + (rest ? '#' + rest : '')); } catch (e) {}
+    if (link) {
+      var dot = link.indexOf('.');
+      if (dot > 0) pendingLink = { id: link.slice(0, dot), code: link.slice(dot + 1) };
+      return false;
+    }
     if (!tokenValid(token)) return false;
     state.token = token;
     var c = claims(token);
     state.user = { id: c.sub, name: c.name, avatar: c.picture, identities: {} };
     save();
+    // "Confirm it's you" came back as the same account: carry on with what they were doing.
+    var after = null;
+    try { after = JSON.parse(read(K_AFTER) || 'null'); } catch (e) {}
+    store(K_AFTER, null);
+    if (after && after.then && after.sub != null && String(after.sub) === String(c.sub) && Date.now() - after.at < 15 * 60 * 1000) afterSignIn = after.then;
     return true;
   }
 
@@ -182,6 +283,7 @@
 
   load();
   var cameBack = takeRedirect();
+  var linkResult = pendingLink ? completeLink(pendingLink) : null;
   // Signed in, a link to another House Tandem site opens it signed in too:
   // a one-time code rides along (the session itself never goes in a URL).
   var HANDOFF_HOSTS = ['dice.housetandem.com', 'coins.housetandem.com'];
@@ -221,7 +323,18 @@
     refresh: refresh,
     signInWithDiscord: signInWithDiscord,
     signInWithSteam: signInWithSteam,
-    link: goSignIn,
+    link: function (provider) { return goSignIn(provider); },
+    /** Back from a link: a Promise of its result (see completeLink), or null. */
+    linkResult: linkResult,
+    combine: combine,
+    signInAgain: signInAgain,
+    /** 'link:steam' / 'link:discord' when "Confirm it's you" came back as the same account. */
+    afterSignIn: afterSignIn,
+    /** A Discord sign-in found a verified Steam that has its own account (Link Steam combines them). */
+    steamHasAccount: steamHasAccount,
+    notices: notices,
+    noticeSeen: noticeSeen,
+    undoNotice: undoNotice,
     signOut: signOut,
     deleteAccount: deleteAccount,
     /** Achievements and stats in the other House Tandem games: { dice: { earned: [{id, earnedAt}], stats } } */
