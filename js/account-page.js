@@ -63,8 +63,128 @@
     err.hidden = true;
     start().catch(function (e) {
       btn.disabled = false;
+      if (e.fresh) { showFresh(e.provider); return; }
       err.textContent = e.message;
       err.hidden = false;
+    });
+  }
+
+  var NAME = { discord: 'Discord', steam: 'Steam' };
+
+  /**
+   * "Confirm it's you": linking needs a sign-in from the last 10 minutes. Sign in again with
+   * a sign-in this account already has; back here, the link starts by itself (HTAccount.afterSignIn).
+   */
+  function showFresh(target) {
+    var ids = (A.user && A.user.identities) || {};
+    var again = ids.discord ? 'discord' : ids.steam ? 'steam' : 'discord';
+    var btn = $('account-fresh-btn');
+    btn.textContent = 'Sign in again with ' + NAME[again];
+    btn.className = 'btn account-discord-small ' + (again === 'steam' ? 'account-playtest' : 'account-discord');
+    btn.onclick = function () { go(btn, function () { return A.signInAgain(again, 'link:' + target); }); };
+    $('account-fresh').hidden = false;
+    $('account-fresh').scrollIntoView({ block: 'center' });
+  }
+
+  function say(text) {
+    var ok = $('account-link-ok');
+    ok.textContent = text || '';
+    ok.hidden = !text;
+  }
+  function sayError(text) {
+    var err = $('account-link-error');
+    err.textContent = text || '';
+    err.hidden = !text;
+  }
+
+  /** One side of the combine screen: picture, name, sign-ins, rides and badges. */
+  function combineCard(box, acct, label) {
+    box.replaceChildren();
+    acct = acct || {};
+    box.appendChild(el('div', 'account-combine-label', label));
+    if (acct.avatar) {
+      var img = el('img', 'account-combine-pic');
+      img.src = acct.avatar; img.alt = ''; img.referrerPolicy = 'no-referrer';
+      box.appendChild(img);
+    }
+    box.appendChild(el('div', 'account-combine-name', acct.name || 'House Tandem player'));
+    var logins = (acct.logins || []).map(function (l) { return NAME[l.provider] || l.provider; }).join(' + ');
+    if (logins) box.appendChild(el('div', 'account-combine-logins', logins));
+    box.appendChild(el('div', 'account-combine-stats', (acct.rides || 0) + ' rides · ' + (acct.badges || 0) + ' badges'));
+  }
+
+  /** Back from a link whose sign-in already has its own account: show both, and the player chooses. */
+  function showCombine(res) {
+    var dlg = $('account-combine-dialog');
+    $('combine-provider').textContent = NAME[res.provider] || 'sign-in';
+    combineCard($('combine-other'), res.other, NAME[res.provider] + ' account');
+    combineCard($('combine-into'), res.into, 'This account');
+    $('combine-into-name').textContent = (res.into && res.into.name) || 'this account';
+    $('combine-error').hidden = true;
+    var decided = false;
+    var finish = function (ok) {
+      if (decided) return;
+      decided = true;
+      $('combine-ok').disabled = $('combine-cancel').disabled = true;
+      A.combine(res.id, ok).then(function (d) {
+        if (dlg.open) dlg.close();
+        if (d.status === 'combined') {
+          say('Combined. Both sign-ins now open this account.');
+          render(null);
+          A.refresh().then(function (me) { lastMe = me; render(me); renderGames(); loadNotices(); });
+        } else say('Nothing was changed.');
+      }).catch(function (e) {
+        if (dlg.open) dlg.close();
+        sayError(e.message);
+      });
+    };
+    $('combine-ok').disabled = $('combine-cancel').disabled = false;
+    $('combine-ok').onclick = function () { finish(true); };
+    $('combine-cancel').onclick = function () { finish(false); };
+    dlg.addEventListener('close', function () { finish(false); }, { once: true });   // Esc
+    dlg.showModal();
+  }
+
+  /** "Recent changes": links and combines from the last 7 days, each with its undo. */
+  function loadNotices() {
+    A.notices().then(function (list) {
+      var box = $('account-notices');
+      var ul = $('account-notice-list');
+      ul.replaceChildren();
+      box.hidden = !list.length;
+      var day = function (s) { return new Date(s * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); };
+      list.forEach(function (n) {
+        var li = el('li', n.seen ? 'seen' : 'new');
+        var what = n.kind === 'combine'
+          ? 'The account “' + (n.from_name || NAME[n.provider]) + '” was combined into this one on ' + day(n.created_at) + '.'
+          : (NAME[n.provider] || 'A sign-in') + ' “' + (n.login_name || '') + '” was linked on ' + day(n.created_at) + '.';
+        li.appendChild(el('p', null, what + ' Not you? You can undo it until ' + day(n.undo_until) + '.'));
+        var undo = el('button', 'account-link', n.kind === 'combine' ? 'Separate them' : 'Remove it');
+        undo.type = 'button';
+        undo.addEventListener('click', function () {
+          undo.disabled = true;
+          A.undoNotice(n.id).then(function (d) {
+            if (d.signed_out) {
+              render(null);
+              $('account-error').textContent = n.kind === 'combine'
+                ? 'Separated. Each account has its own rides and badges again. Sign in with the one you want.'
+                : 'Removed. Sign in with the account you want.';
+              $('account-error').hidden = false;
+              return;
+            }
+            say(n.kind === 'combine' ? 'Separated. Each account has its own rides and badges again.' : 'Removed.');
+            A.refresh().then(function (me) { lastMe = me; render(me); renderGames(); loadNotices(); });
+          }).catch(function (e) { undo.disabled = false; sayError(e.message); });
+        });
+        li.appendChild(undo);
+        if (!n.seen) {
+          var ok = el('button', 'account-link account-link-quiet', 'That was me');
+          ok.type = 'button';
+          ok.addEventListener('click', function () { A.noticeSeen(n.id).then(loadNotices); });
+          li.appendChild(ok);
+        }
+        ul.appendChild(li);
+      });
     });
   }
 
@@ -400,6 +520,13 @@
     $('step-signin-done').hidden = !ids.discord;
     $('step-signin-link').hidden = !!ids.discord;
     $('step-signin').classList.toggle('done', !!ids.discord);
+    $('step-steam-done').hidden = !ids.steam;
+    $('step-steam-link').hidden = !!ids.steam;
+    $('step-steam-hint').hidden = !!ids.steam;
+    if (!ids.steam && A.steamHasAccount) {
+      $('step-steam-hint').textContent = 'Your Steam already has its own House Tandem account. Choose Link your Steam account to see both and combine them.';
+    }
+    $('step-steam').classList.toggle('done', !!ids.steam);
 
     if (me) {
       var best = (me.bestScores || []);
@@ -415,7 +542,23 @@
   document.addEventListener('DOMContentLoaded', function () {
     render(null);
     GAMES.forEach(buildCard);
-    if (A.signedIn) A.refresh().then(function (me) { lastMe = me; render(me); checkServer(); renderGames(); });
+    if (A.signedIn) A.refresh().then(function (me) { lastMe = me; render(me); checkServer(); renderGames(); loadNotices(); });
+    // Back from linking: finish it here (only this browser can), or show both accounts to choose.
+    if (A.linkResult) A.linkResult.then(function (res) {
+      if (res.status === 'combine') { showCombine(res); return; }
+      if (res.status === 'linked') {
+        say('Linked. Both sign-ins now open this account.');
+        A.refresh().then(function (me) { lastMe = me; render(me); renderGames(); loadNotices(); });
+        return;
+      }
+      sayError(res.error);
+    });
+    // "Confirm it's you" came back as the same account: start the link they asked for.
+    if (A.afterSignIn && /^link:(steam|discord)$/.test(A.afterSignIn)) {
+      var target = A.afterSignIn.slice(5);
+      A.link(target).catch(function (e) { sayError(e.message); });
+    }
+    $('step-steam-link').addEventListener('click', function () { go(this, function () { return A.link('steam'); }); });
     // Back from joining in another tab: check again.
     window.addEventListener('focus', function () { if (A.signedIn && serverState === false) checkServer(); });
 
