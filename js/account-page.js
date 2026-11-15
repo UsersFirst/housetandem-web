@@ -110,7 +110,11 @@
     box.appendChild(el('div', 'account-combine-name', acct.name || 'House Tandem player'));
     var logins = (acct.logins || []).map(function (l) { return NAME[l.provider] || l.provider; }).join(' + ');
     if (logins) box.appendChild(el('div', 'account-combine-logins', logins));
-    box.appendChild(el('div', 'account-combine-stats', (acct.rides || 0) + ' rides · ' + (acct.badges || 0) + ' badges'));
+    var count = function (n, one) { n = n || 0; return n + ' ' + one + (n === 1 ? '' : 's'); };
+    box.appendChild(el('div', 'account-combine-stats', count(acct.rides, 'ride') + ' · ' + count(acct.badges, 'badge') + ' in Tandemonium'));
+    // A combine moves every House Tandem game, so the card names the others it has played.
+    var games = (acct.games || []).map(function (g) { return g.badges ? g.title + ' (' + count(g.badges, 'badge') + ')' : g.title; });
+    if (games.length) box.appendChild(el('div', 'account-combine-stats', 'Also: ' + games.join(', ')));
   }
 
   /** Back from a link whose sign-in already has its own account: show both, and the player chooses. */
