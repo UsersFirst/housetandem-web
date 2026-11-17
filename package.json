@@ -7,6 +7,8 @@
     "check:links": "node tools/build-links.js --check",
     "deploy:proxy": "npx wrangler@4 deploy -c workers/e-proxy/wrangler.toml",
     "sync-ui": "node tools/sync-ui.js",
-    "check:ui": "node tools/sync-ui.js --check"
+    "check:ui": "node tools/sync-ui.js --check",
+    "sync-identity": "node tools/sync-identity.js",
+    "check:identity": "node tools/sync-identity.js --check"
   }
 }

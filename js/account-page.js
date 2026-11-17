@@ -1,5 +1,7 @@
-// account.html: sign in with Discord or Steam, then the account's pictures,
-// linked sign-ins (with a Link button for the missing one) and Tandemonium record. Needs js/ht-account.js first.
+// account.html: sign in with Discord or Steam, then the account's linked sign-ins (with a
+// Link button for the missing one) and its record in every game. Needs js/ht-account.js first
+// (both are modules, run in order). The logins, the notices and the combine question are
+// the shared elements from @usersfirst/identity (lib/identity).
 (function () {
   var A = window.HTAccount;
   var $ = function (id) { return document.getElementById(id); };
@@ -97,39 +99,16 @@
     err.hidden = !text;
   }
 
-  /** One side of the combine screen: picture, name, sign-ins, rides and badges. */
-  function combineCard(box, acct, label) {
-    box.replaceChildren();
-    acct = acct || {};
-    box.appendChild(el('div', 'account-combine-label', label));
-    if (acct.avatar) {
-      var img = el('img', 'account-combine-pic');
-      img.src = acct.avatar; img.alt = ''; img.referrerPolicy = 'no-referrer';
-      box.appendChild(img);
-    }
-    box.appendChild(el('div', 'account-combine-name', acct.name || 'House Tandem player'));
-    var logins = (acct.logins || []).map(function (l) { return NAME[l.provider] || l.provider; }).join(' + ');
-    if (logins) box.appendChild(el('div', 'account-combine-logins', logins));
-    var count = function (n, one) { n = n || 0; return n + ' ' + one + (n === 1 ? '' : 's'); };
-    box.appendChild(el('div', 'account-combine-stats', count(acct.rides, 'ride') + ' · ' + count(acct.badges, 'badge') + ' in Tandemonium'));
-    // A combine moves every House Tandem game, so the card names the others it has played.
-    var games = (acct.games || []).map(function (g) { return g.badges ? g.title + ' (' + count(g.badges, 'badge') + ')' : g.title; });
-    if (games.length) box.appendChild(el('div', 'account-combine-stats', 'Also: ' + games.join(', ')));
-  }
-
   /** Back from a link whose sign-in already has its own account: show both, and the player chooses. */
   function showCombine(res) {
     var dlg = $('account-combine-dialog');
-    $('combine-provider').textContent = NAME[res.provider] || 'sign-in';
-    combineCard($('combine-other'), res.other, NAME[res.provider] + ' account');
-    combineCard($('combine-into'), res.into, 'This account');
-    $('combine-into-name').textContent = (res.into && res.into.name) || 'this account';
-    $('combine-error').hidden = true;
+    var q = $('combine-question');
+    q.question = { provider: res.provider, other: res.other, into: res.into };
     var decided = false;
     var finish = function (ok) {
       if (decided) return;
       decided = true;
-      $('combine-ok').disabled = $('combine-cancel').disabled = true;
+      q.busy = true;
       A.combine(res.id, ok).then(function (d) {
         if (dlg.open) dlg.close();
         if (d.status === 'combined') {
@@ -142,9 +121,7 @@
         sayError(e.message);
       });
     };
-    $('combine-ok').disabled = $('combine-cancel').disabled = false;
-    $('combine-ok').onclick = function () { finish(true); };
-    $('combine-cancel').onclick = function () { finish(false); };
+    q.addEventListener('uf-combine', function (e) { finish(e.detail.ok === true); }, { once: true });
     dlg.addEventListener('close', function () { finish(false); }, { once: true });   // Esc
     dlg.showModal();
   }
@@ -156,17 +133,11 @@
       var ul = $('account-notice-list');
       ul.replaceChildren();
       box.hidden = !list.length;
-      var day = function (s) { return new Date(s * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); };
       list.forEach(function (n) {
-        var li = el('li', n.seen ? 'seen' : 'new');
-        var what = n.kind === 'combine'
-          ? 'The ' + (NAME[n.provider] || '') + ' account “' + (n.from_name || n.login_name || '') + '” was combined into this one on ' + day(n.created_at) + '.'
-          : 'The ' + (NAME[n.provider] || '') + ' account “' + (n.login_name || '') + '” was linked to this account on ' + day(n.created_at) + '.';
-        li.appendChild(el('p', null, what + ' Not you? You can undo it until ' + day(n.undo_until) + '.'));
-        var undo = el('button', 'account-link', n.kind === 'combine' ? 'Separate them' : 'Remove it');
-        undo.type = 'button';
-        undo.addEventListener('click', function () {
-          undo.disabled = true;
+        var item = document.createElement('uf-account-notice');
+        item.notice = n;
+        item.addEventListener('uf-notice-undo', function () {
+          item.busy = true;
           A.undoNotice(n.id).then(function (d) {
             if (d.signed_out) {
               render(null);
@@ -178,16 +149,10 @@
             }
             say(n.kind === 'combine' ? 'Separated. Each account has its own rides and badges again.' : 'Removed.');
             A.refresh().then(function (me) { lastMe = me; render(me); renderGames(); loadNotices(); });
-          }).catch(function (e) { undo.disabled = false; sayError(e.message); });
+          }).catch(function (e) { item.busy = false; item.error = e.message; });
         });
-        li.appendChild(undo);
-        if (!n.seen) {
-          var ok = el('button', 'account-link account-link-quiet', 'That was me');
-          ok.type = 'button';
-          ok.addEventListener('click', function () { A.noticeSeen(n.id).then(loadNotices); });
-          li.appendChild(ok);
-        }
-        ul.appendChild(li);
+        item.addEventListener('uf-notice-ok', function () { item.busy = true; A.noticeSeen(n.id).then(loadNotices); });
+        ul.appendChild(item);
       });
     });
   }
@@ -517,7 +482,7 @@
       e.preventDefault();
       go(btn, A.signInWithDiscord);
     });
-    if (A.cameBack && A.signedIn) track('signin_discord_done', { server: A.serverJoin });
+    A.ready.then(function () { if (A.cameBack && A.signedIn) track('signin_discord_done', { server: A.serverJoin }); });
   }
 
   function render(me) {
@@ -526,43 +491,11 @@
     $('account-profile').hidden = !user;
     if (!user) return;
 
-    // One line per linked account: platform icon, name, picture. Plain text, not pills (they aren't buttons).
-    var pics = {};
-    A.pictures(user).forEach(function (p) { pics[p.provider] = p.avatar; });
-    // The platform icons come from the sign-in buttons already on the page.
-    var ICON = { discord: '#account-discord-btn svg', steam: '.js-playtest svg' };
-
+    // One line per linked account: platform icon, name, picture; a Link button for a missing one.
+    var card = $('account-identities');
+    card.busy = '';
+    card.user = user;
     var ids = user.identities || {};
-    var rows = [['discord', 'Discord'], ['steam', 'Steam']].map(function (pair) {
-      var li = document.createElement('li');
-      var linked = !!ids[pair[0]];
-      li.className = linked ? 'linked' : 'unlinked';
-      li.setAttribute('data-provider', pair[0]);
-      if (linked) {
-        var pic = document.createElement(pics[pair[0]] ? 'img' : 'span');
-        pic.className = 'account-id-pic';
-        if (pics[pair[0]]) { pic.src = pics[pair[0]]; pic.alt = ''; pic.referrerPolicy = 'no-referrer'; }
-        var icon = document.querySelector(ICON[pair[0]]);
-        icon = icon ? icon.cloneNode(true) : document.createElement('span');
-        icon.setAttribute('class', 'account-id-icon');
-        icon.setAttribute('width', '18'); icon.setAttribute('height', '18');
-        var name = document.createElement('span');
-        name.className = 'account-id-name';
-        name.textContent = ids[pair[0]].name || 'linked';
-        li.title = pair[1];
-        li.append(icon, name, pic);   // picture on the right
-      } else {
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'account-link';
-        b.id = 'account-link-' + pair[0];
-        b.textContent = 'Link ' + pair[1];
-        b.addEventListener('click', function () { go(b, function () { return A.link(pair[0]); }); });
-        li.appendChild(b);
-      }
-      return li;
-    });
-    $('account-identities').replaceChildren.apply($('account-identities'), rows);
     $('account-link-note').hidden = !!(ids.steam && ids.discord);
     $('step-signin-done').hidden = !ids.discord;
     $('step-signin-link').hidden = !!ids.discord;
@@ -587,29 +520,39 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    render(null);
     GAMES.forEach(buildCard);
     var tandSheet = document.createElement('uf-achievement-sheet');
     tandSheet.id = 'tandemonium-ach-sheet';
     tandSheet.setAttribute('heading', 'Tandemonium');
     $('account-sheets').appendChild(tandSheet);
     $('tandemonium-ach-open').addEventListener('click', function () { tandSheet.show(); });
-    if (A.signedIn) A.refresh().then(function (me) { lastMe = me; render(me); checkServer(); renderGames(); loadNotices(); });
-    // Back from linking: finish it here (only this browser can), or show both accounts to choose.
-    if (A.linkResult) A.linkResult.then(function (res) {
-      if (res.status === 'combine') { showCombine(res); return; }
-      if (res.status === 'linked') {
-        say('Linked. Both sign-ins now open this account.');
-        A.refresh().then(function (me) { lastMe = me; render(me); renderGames(); loadNotices(); });
-        return;
+    // A return from Discord or Steam is dealt with first (HTAccount.ready): a sign-in, or a link to finish.
+    A.ready.then(function () {
+      render(null);
+      if (A.signedIn) A.refresh().then(function (me) { lastMe = me; render(me); checkServer(); renderGames(); loadNotices(); });
+      // Back from linking (only this tab could finish it): linked, or both accounts to choose.
+      var res = A.linkResult;
+      if (res) {
+        if (res.status === 'combine') showCombine(res);
+        else if (res.status === 'linked') say('Linked. Both sign-ins now open this account.');
+        else sayError(res.error);
       }
-      sayError(res.error);
+      // "Confirm it's you" came back as the same account: start the link they asked for.
+      if (A.afterSignIn && /^link:(steam|discord)$/.test(A.afterSignIn)) {
+        var target = A.afterSignIn.slice(5);
+        A.link(target).catch(function (e) { sayError(e.message); });
+      }
     });
-    // "Confirm it's you" came back as the same account: start the link they asked for.
-    if (A.afterSignIn && /^link:(steam|discord)$/.test(A.afterSignIn)) {
-      var target = A.afterSignIn.slice(5);
-      A.link(target).catch(function (e) { sayError(e.message); });
-    }
+    $('account-identities').addEventListener('uf-profile-link', function (e) {
+      var card = this, provider = e.detail.provider;
+      card.busy = provider;
+      sayError('');
+      A.link(provider).catch(function (err) {
+        card.busy = '';
+        if (err.fresh) { showFresh(err.provider); return; }
+        sayError(err.message);
+      });
+    });
     $('step-steam-link').addEventListener('click', function () { go(this, function () { return A.link('steam'); }); });
     // Back from joining in another tab: check again.
     window.addEventListener('focus', function () { if (A.signedIn && serverState === false) checkServer(); });

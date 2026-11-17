@@ -108,7 +108,8 @@
       <section class="account-card" id="account-profile" hidden>
         <!-- Fixed heading: the account lines below already show each username. -->
         <h1>Your House Tandem profile</h1>
-        <ul class="account-identities" id="account-identities"></ul>
+        <!-- One line per linked account (uf-profile-card, shared with the games). -->
+        <uf-profile-card id="account-identities"></uf-profile-card>
         <p class="account-error" id="account-link-error" role="alert" hidden></p>
         <p class="account-ok" id="account-link-ok" role="status" hidden></p>
         <!-- Linking needs a sign-in from the last 10 minutes (Tandemonium #612). -->
@@ -119,7 +120,7 @@
         <!-- A sign-in linked or an account combined in, in the last 7 days: each can be undone. -->
         <div class="account-notices" id="account-notices" hidden>
           <h2>Recent changes to your account</h2>
-          <ul id="account-notice-list"></ul>
+          <div class="account-notice-items" id="account-notice-list"></div>
         </div>
         <ol class="account-steps account-steps-done" id="account-checklist">
           <li class="account-step" id="step-signin">
@@ -217,22 +218,9 @@
       <div id="account-sheets"></div>
 
       <!-- Linking a sign-in that already has its own account: both accounts, and the player chooses (Tandemonium #612). -->
-      <dialog class="account-dialog" id="account-combine-dialog" aria-labelledby="combine-title">
-        <form method="dialog">
-          <h2 id="combine-title">This <span id="combine-provider">Steam</span> account already has its own House Tandem account</h2>
-          <div class="account-combine">
-            <div class="account-combine-card" id="combine-other"></div>
-            <div class="account-combine-arrow" aria-hidden="true">&rarr;</div>
-            <div class="account-combine-card" id="combine-into"></div>
-          </div>
-          <p>Combine it into <b id="combine-into-name">this account</b>? Rides, achievements and progress in every House Tandem game are kept from both, and both sign-ins open the combined account. You can separate them again for 7 days.</p>
-          <p class="account-small">Changed your mind later? You can separate them again for 7 days, here on your profile.</p>
-          <p class="account-error" id="combine-error" role="alert" hidden></p>
-          <div class="account-dialog-buttons">
-            <button type="button" class="btn account-signout" id="combine-cancel">Cancel</button>
-            <button type="button" class="btn" id="combine-ok">Combine</button>
-          </div>
-        </form>
+      <dialog class="account-dialog" id="account-combine-dialog" aria-label="Combine your accounts?">
+        <!-- Both accounts, Cancel or Combine (uf-combine-accounts, shared with the games). -->
+        <uf-combine-accounts id="combine-question" autofocus></uf-combine-accounts>
       </dialog>
 
       <dialog class="account-dialog" id="account-delete-dialog" aria-labelledby="delete-title">
@@ -289,12 +277,16 @@
 
   <script src="js/ht-config.js"></script>
   <script src="js/ht-analytics.js"></script>
-  <script src="js/ht-account.js"></script>
+  <script type="module" src="js/ht-account.js"></script>
   <script src="js/main.js"></script>
-  <script src="js/account-page.js"></script>
+  <script type="module" src="js/account-page.js"></script>
   <script type="module">
     import { UfControllerGlyph } from './lib/ui/elements/uf-controller-glyph.js';
     import './lib/ui/elements/uf-achievement-sheet.js';
+    // House Tandem sign-in's shared elements (@usersfirst/identity): the logins, a notice, the combine question.
+    import './lib/identity/elements/uf-profile-card.js';
+    import './lib/identity/elements/uf-account-notice.js';
+    import './lib/identity/elements/uf-combine-accounts.js';
     UfControllerGlyph.setDefault({ family: 'keyboard' });   // the sheets' Close reads "Esc" on the web
   </script>
 </body>
