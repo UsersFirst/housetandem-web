@@ -195,7 +195,7 @@
 @media (min-width: 560px) { .account-stats-small { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 1fr; } }
 .account-stats-small b { font-size: 1.05rem; }
 .account-stats > [hidden] { display: none; }
-/* Tandemonium's count has no list on the web yet: same tile, not a button. */
+/* A count whose list has not loaded (or could not): same tile, not yet a button. */
 .account-ach-static { cursor: default; }
 .account-ach-static:hover { border-color: var(--border-color); box-shadow: none; }
 /* Time played · Last played, under each game's title */

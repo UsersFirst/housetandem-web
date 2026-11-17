@@ -306,6 +306,48 @@
     });
   }
 
+  /** Tandemonium publishes its list like the other games, with sections, hidden ones and renamed ids. */
+  var TANDEMONIUM_DEFS = 'https://tandemonium.housetandem.com/achievements.json';
+
+  /**
+   * Tandemonium's achievements open the same sheet as the other games'. A hidden one
+   * shows as ??? until the account has earned it. Until the list loads (or if it can't),
+   * the card keeps its plain count.
+   */
+  function renderTandemoniumAchievements(gamesP) {
+    var defsP = fetch(TANDEMONIUM_DEFS).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    Promise.all([defsP, gamesP]).then(function (res) {
+      var raw = res[0];
+      var defs = (raw && raw.achievements) || [];
+      if (!defs.length) return;
+      var renamed = (raw && raw.renamed) || {};
+      var mine = (res[1] && res[1].tandemonium) || { earned: [] };
+      var have = {};
+      (mine.earned || []).forEach(function (e) {
+        var id = renamed[e.id] || e.id;
+        var at = e.earnedAt || true;
+        // Earned under both the old id and the new one: the earlier date.
+        if (!have[id] || (typeof at === 'string' && (have[id] === true || at < have[id]))) have[id] = at;
+      });
+      var sheet = $('tandemonium-ach-sheet');
+      sheet.sections = (raw.sections || []).map(function (s) { return { id: s.id, title: s.title }; });
+      sheet.achievements = defs.map(function (d) {
+        var at = have[d.id];
+        var secret = !!d.hidden && !at;
+        return { id: d.id, name: secret ? '???' : d.name, description: secret ? 'A hidden achievement' : (d.description || ''),
+          icon: secret ? '❔' : (d.icon || '🚲'), section: d.group || undefined, secret: secret,
+          earned: !!at, earnedAt: typeof at === 'string' ? at : null };
+      });
+      var count = defs.filter(function (d) { return have[d.id]; }).length + '/' + defs.length;
+      $('stat-ach').textContent = count;
+      var open = $('tandemonium-ach-open');
+      open.disabled = false;
+      open.classList.remove('account-ach-static');
+      open.setAttribute('aria-label', count + ' achievements. See all');
+      $('tandemonium-ach-see').hidden = false;
+    });
+  }
+
   /**
    * Tandemonium's card from /me/games: time played, distance, rides and days
    * ridden from the game's lifetime stats. An older API has no `tandemonium`
@@ -344,6 +386,7 @@
   function renderGames() {
     var gamesP = A.games().catch(function () { return {}; });
     gamesP.then(function (games) { renderTandemonium(games); renderSummary(games); });
+    renderTandemoniumAchievements(gamesP);
     GAMES.forEach(function (g) { renderGame(g, gamesP); });
   }
   var serverState = null;
@@ -546,6 +589,11 @@
   document.addEventListener('DOMContentLoaded', function () {
     render(null);
     GAMES.forEach(buildCard);
+    var tandSheet = document.createElement('uf-achievement-sheet');
+    tandSheet.id = 'tandemonium-ach-sheet';
+    tandSheet.setAttribute('heading', 'Tandemonium');
+    $('account-sheets').appendChild(tandSheet);
+    $('tandemonium-ach-open').addEventListener('click', function () { tandSheet.show(); });
     if (A.signedIn) A.refresh().then(function (me) { lastMe = me; render(me); checkServer(); renderGames(); loadNotices(); });
     // Back from linking: finish it here (only this browser can), or show both accounts to choose.
     if (A.linkResult) A.linkResult.then(function (res) {

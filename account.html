@@ -181,9 +181,10 @@
             <div><dt>Time played</dt><dd id="tandemonium-time">–</dd></div>
             <div><dt>Last played</dt><dd id="tandemonium-last">–</dd></div>
           </dl>
-          <div class="account-ach-open account-ach-static">
-            <b id="stat-ach">–</b><span>achievements</span>
-          </div>
+          <!-- A plain count until the game's list loads; then it opens the full list, like the other games'. -->
+          <button class="account-ach-open account-ach-static" id="tandemonium-ach-open" type="button" aria-haspopup="dialog" disabled>
+            <b id="stat-ach">–</b><span>achievements</span><span class="account-ach-see" id="tandemonium-ach-see" hidden>See all &rsaquo;</span>
+          </button>
           <div class="account-stats account-stats-small" id="account-stats">
             <div id="stat-distance-cell" hidden><b id="stat-distance">–</b><span>ridden</span></div>
             <div><b id="stat-rides">–</b><span>rides</span></div>
