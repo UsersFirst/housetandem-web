@@ -1,346 +1,225 @@
-// House Tandem account on the website (Tandemonium #612, housetandem-web #21).
+// House Tandem account: the session for this site, and the account link in the nav.
 //
-// The same account as the games: sign in with Discord or Steam here, and link
-// the other one so both pictures show. The account lives on the
-// Tandemonium API for now (it moves to auth.housetandem.com later).
+// The sign-in itself is @usersfirst/identity (lib/identity, vendored from the lab: the same
+// client Tandemonium runs on). This file is the site's side of it: which Discord permissions
+// to ask for, the prepared Discord link for phones, the nav, and opening the other House
+// Tandem sites signed in. Pages use it through window.HTAccount.
 //
-// Every page: a "Sign in" link in the nav, which becomes the account's pictures
-// (Discord left, Steam right) once signed in. account.html uses window.HTAccount.
-(function () {
-  // House Tandem's own address for the API (its workers.dev address looked like phishing on Discord's consent screen).
-  var API = window.HT_API || 'https://api.housetandem.com';
-  var K_TOKEN = 'ht_auth_token';
-  var K_USER = 'ht_auth_user';
+// A module: it runs before DOMContentLoaded, after the page's classic scripts. Anything that
+// depends on coming back from Discord or Steam waits for HTAccount.ready.
+import { IdentityClient, loginPictures } from '../lib/identity/client.js';
 
-  function store(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
-  function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+// House Tandem's own address for the API (its workers.dev address looked like phishing on Discord's consent screen).
+const API = window.HT_API || 'https://api.housetandem.com';
+const NAMES = { discord: 'Discord', steam: 'Steam' };
 
-  function claims(token) {
-    try { return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); } catch (e) { return null; }
-  }
-  function tokenValid(token) {
-    var c = token && claims(token);
-    return !!(c && c.exp && c.exp > Date.now() / 1000 + 60);
-  }
+const client = new IdentityClient({ apiBase: API });
+// A stored session past its date is no session.
+if (client.token && client.tokenExpired()) client.signOut();
 
-  var listeners = [];
-  var state = { token: null, user: null };
+/** The pictures to show, left to right: Discord, then Steam. */
+const pictures = (user) => loginPictures(user);
 
-  function load() {
-    state.token = read(K_TOKEN);
-    try { state.user = JSON.parse(read(K_USER) || 'null'); } catch (e) { state.user = null; }
-    if (!tokenValid(state.token)) { state.token = null; state.user = null; }
-  }
-  function save() {
-    store(K_TOKEN, state.token);
-    store(K_USER, state.user ? JSON.stringify(state.user) : null);
-    listeners.forEach(function (fn) { try { fn(state.user); } catch (e) {} });
-  }
+/** Re-read the account (name, pictures, linked sign-ins) and the Tandemonium record. → the /me answer, or null */
+async function refresh() {
+  if (!client.token) return null;
+  const user = await client.refresh();
+  // A token the server no longer takes: signed out, here too.
+  if (!user && (client.meStatus === 401 || !client.token)) { client.signOut(); return null; }
+  return user ? client.me : null;
+}
 
-  /** The pictures to show, left to right: Discord, then Steam. */
-  function pictures(user) {
-    if (!user) return [];
-    var ids = user.identities || {};
-    var out = [];
-    ['discord', 'steam'].forEach(function (p) { if (ids[p] && ids[p].avatar) out.push({ provider: p, avatar: ids[p].avatar, name: ids[p].name }); });
-    if (!out.length && user.avatar) out.push({ provider: 'account', avatar: user.avatar, name: user.name });
-    return out;
-  }
+// What a Discord sign-in asks for beyond name and picture (the Permissions switches on account.html):
+// join the House Tandem server, email for new game news, linked accounts for Steam achievements.
+let discordScopes = ['guilds.join', 'email', 'connections'];
+const optsFor = (provider) => (provider === 'discord' ? { scopes: discordScopes.slice() } : {});
+function setDiscordScopes(list) {
+  discordScopes = (list || []).slice();
+  discordLink = { url: null, at: 0, key: '' };   // the prepared link asked for the old set
+}
 
-  function api(path, opts) {
-    opts = opts || {};
-    var headers = { 'Content-Type': 'application/json' };
-    if (state.token && !opts.noAuth) headers.Authorization = 'Bearer ' + state.token;
-    return fetch(API + path, { method: opts.method || 'GET', headers: headers, body: opts.body ? JSON.stringify(opts.body) : undefined })
-      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { d.__status = r.status; return d; }); });
-  }
-
-  /** Re-read the account (name, pictures, linked sign-ins) and the Tandemonium record. */
-  function refresh() {
-    if (!state.token) return Promise.resolve(null);
-    return api('/me').then(function (me) {
-      if (me.__status === 401) { signOut(); return null; }
-      if (me.user) {
-        state.user = { id: me.user.id, name: me.user.display_name, avatar: me.user.avatar_url, identities: me.user.identities || {} };
-        save();
-      }
-      return me;
-    });
-  }
-
-  var NAMES = { discord: 'Discord', steam: 'Steam' };
-
-  /**
-   * Go to Discord or Steam and come back to this page signed in. Already signed
-   * in, it links that sign-in to this account instead (the API sees the session).
-   */
-  // What a Discord sign-in asks for beyond name and picture (the Permissions switches on account.html):
-  // join the House Tandem server, email for new game news, linked accounts for Steam achievements.
-  var discordScopes = ['guilds.join', 'email', 'connections'];
-  function beginBody(provider) {
-    var back = location.origin + location.pathname + location.search;
-    return provider === 'discord' ? { mode: 'redirect', return_to: back, scopes: discordScopes.slice() } : { return_to: back };
-  }
-  function setDiscordScopes(list) {
-    discordScopes = (list || []).slice();
-    discordLink = { url: null, at: 0, key: '' };   // the prepared link asked for the old set
-  }
-  /**
-   * Linking (signed in) needs a sign-in to this account from the last 10 minutes; an
-   * older session gets an error with `fresh: true` (the page offers "Sign in again").
-   * The link's secret stays in this browser: only it can finish the link (Tandemonium #612).
-   */
-  var K_LINK = 'ht_link_pending';
-  function goSignIn(provider, opts) {
-    opts = opts || {};
-    var linking = !!state.token && !opts.signIn;
-    return api('/auth/' + provider + '/begin', { method: 'POST', body: beginBody(provider), noAuth: !linking }).then(function (d) {
-      if (d.__status === 401 && d.code === 'fresh_signin') {
-        var e = new Error(d.error || 'For your safety, sign in again before linking another account.');
-        e.fresh = true; e.provider = provider;
-        throw e;
-      }
-      if (d.url) {
-        if (linking && d.secret) store(K_LINK, JSON.stringify({ id: d.id, secret: d.secret, at: Date.now() }));
-        location.assign(d.url);
-        return true;
-      }
-      throw new Error(d.error || NAMES[provider] + ' sign-in is unavailable right now');
-    });
-  }
-
-  /**
-   * "Confirm it's you": sign in again with one of this account's own sign-ins, then carry
-   * on with `then` ('link:steam' / 'link:discord') if it came back as the same account.
-   */
-  var K_AFTER = 'ht_after_signin';
-  function signInAgain(provider, then) {
-    var c = state.token && claims(state.token);
-    store(K_AFTER, JSON.stringify({ sub: c ? c.sub : null, then: then || null, at: Date.now() }));
-    return goSignIn(provider, { signIn: true });
-  }
-
-  function applySession(d) {
-    if (!d || !d.token) return;
-    state.token = d.token;
-    var u = d.user || {};
-    state.user = { id: u.id, name: u.name, avatar: u.avatar, identities: u.identities || {} };
-    save();
-  }
-  function pendingSecret(id) {
-    var p = null;
-    try { p = JSON.parse(read(K_LINK) || 'null'); } catch (e) {}
-    return p && p.id === id && Date.now() - p.at < 10 * 60 * 1000 ? p.secret : null;
-  }
-
-  /**
-   * Back from Discord or Steam with #ht_link=<id>.<code>: finish the link this browser began.
-   * → { status: 'linked' } | { status: 'combine', id, provider, login, into, other } | { status: 'error', error }
-   */
-  function completeLink(link) {
-    var secret = pendingSecret(link.id);
-    if (!secret || !state.token) {
-      return Promise.resolve({ status: 'error', error: 'That link was started in another browser or tab. Start it again here, from your profile.' });
-    }
-    return api('/auth/link/complete', { method: 'POST', body: { id: link.id, code: link.code, secret: secret } }).then(function (d) {
-      if (d.status === 'linked') { store(K_LINK, null); applySession(d); return { status: 'linked', steamHasAccount: !!d.steam_has_account }; }
-      if (d.status === 'combine') return { status: 'combine', id: link.id, provider: d.provider, login: d.login, into: d.into, other: d.other };
-      store(K_LINK, null);
-      return { status: 'error', error: d.error || 'That link has expired. Start it again from your profile.' };
-    }, function () { return { status: 'error', error: 'Offline. Start the link again from your profile.' }; });
-  }
-
-  /** The combine screen's answer. ok: true combines the two accounts. → { status: 'combined' | 'cancelled' } */
-  function combine(id, ok) {
-    var secret = pendingSecret(id);
-    store(K_LINK, null);
-    if (!secret) return Promise.reject(new Error('That link has expired. Start it again from your profile.'));
-    return api('/auth/link/combine', { method: 'POST', body: { id: id, secret: secret, ok: ok === true } }).then(function (d) {
-      if (d.status === 'combined') { applySession(d); return d; }
-      if (d.status === 'cancelled') return d;
-      throw new Error(d.error || 'That link has expired. Start it again from your profile.');
-    });
-  }
-
-  /** What was linked to or combined into this account in the last 7 days (each can be undone). */
-  function notices() {
-    if (!state.token) return Promise.resolve([]);
-    return api('/me/notices').then(function (d) { return d.notices || []; }, function () { return []; });
-  }
-  function noticeSeen(id) { return api('/me/notices/seen', { method: 'POST', body: { id: id } }); }
-  /** Remove a linked sign-in / separate a combined account. signed_out: this session ended with it. */
-  function undoNotice(id) {
-    return api('/me/notices/undo', { method: 'POST', body: { id: id } }).then(function (d) {
-      if (!d.undone) throw new Error(d.error || 'That could not be undone.');
-      if (d.signed_out) signOut();
-      return d;
-    });
-  }
-
-  /**
-   * Discord's own consent-screen address, made ahead of the tap so the button can
-   * be a plain discord.com link: a tap on one can open the Discord app on a phone,
-   * already signed in, where our redirect would land on Discord's web login.
-   * Good for 8 minutes (the request lives 10). → Promise<string|null>
-   */
-  var discordLink = { url: null, at: 0, key: '' };
-  function prepareDiscordLink() {
-    var key = discordScopes.join(' ');
-    return api('/auth/discord/begin', { method: 'POST', body: beginBody('discord') }).then(function (d) {
-      if (key !== discordScopes.join(' ')) return null;   // switches changed while this was on its way
-      discordLink = d.authorize_url ? { url: d.authorize_url, at: Date.now(), key: key } : { url: null, at: 0, key: '' };
-      return discordLink.url;
-    }, function () { discordLink = { url: null, at: 0, key: '' }; return null; });
-  }
-  function freshDiscordLink() {
-    return discordLink.url && discordLink.key === discordScopes.join(' ') && Date.now() - discordLink.at < 8 * 60 * 1000 ? discordLink.url : null;
-  }
-  function signInWithDiscord() { return goSignIn('discord', { signIn: true }); }
-  function signInWithSteam() { return goSignIn('steam', { signIn: true }); }
-
-  /** Delete the account and everything on it; the server needs the typed word. */
-  function deleteAccount(confirmWord) {
-    return api('/me/delete', { method: 'POST', body: { confirm: confirmWord } }).then(function (d) {
-      if (d.__status !== 200 || !d.deleted) throw new Error(d.error || 'The account could not be deleted. Nothing was changed.');
-      signOut();
-      return d;
-    });
-  }
-
-  function signOut() {
-    state.token = null; state.user = null;
-    save();
-  }
-
-  // Back from Discord or Steam: #ht_auth=<token> (and from Discord, &ht_server=added|already|failed).
-  // Take them off the URL straight away.
-  // Back from a link: #ht_link=<id>.<code> (no session in the URL); js finishes it with the secret.
-  // Back from a Discord sign-in whose verified Steam has its own account: &ht_steam=has_account.
-  var serverJoin = null;
-  var pendingLink = null;
-  var steamHasAccount = false;
-  var afterSignIn = null;
-  function takeRedirect() {
-    if (!location.hash || !/ht_(auth|link)=/.test(location.hash)) return false;
-    var params = new URLSearchParams(location.hash.slice(1));
-    var token = params.get('ht_auth');
-    var link = params.get('ht_link');
-    serverJoin = params.get('ht_server');
-    steamHasAccount = params.get('ht_steam') === 'has_account';
-    ['ht_auth', 'ht_link', 'ht_server', 'ht_steam'].forEach(function (k) { params.delete(k); });
-    var rest = params.toString();
-    try { history.replaceState(null, '', location.pathname + location.search + (rest ? '#' + rest : '')); } catch (e) {}
-    if (link) {
-      var dot = link.indexOf('.');
-      if (dot > 0) pendingLink = { id: link.slice(0, dot), code: link.slice(dot + 1) };
-      return false;
-    }
-    if (!tokenValid(token)) return false;
-    state.token = token;
-    var c = claims(token);
-    state.user = { id: c.sub, name: c.name, avatar: c.picture, identities: {} };
-    save();
-    // "Confirm it's you" came back as the same account: carry on with what they were doing.
-    var after = null;
-    try { after = JSON.parse(read(K_AFTER) || 'null'); } catch (e) {}
-    store(K_AFTER, null);
-    if (after && after.then && after.sub != null && String(after.sub) === String(c.sub) && Date.now() - after.at < 15 * 60 * 1000) afterSignIn = after.then;
+/**
+ * Go to Discord or Steam and come back to this page: signed in, or (already signed in)
+ * with that sign-in linked to this account. Linking needs a sign-in to this account from
+ * the last 10 minutes; an older session gets an error with `fresh: true` (the page offers
+ * "Sign in again"). Only this tab can finish a link it began (Tandemonium #612).
+ */
+async function goSignIn(provider, { signIn = false } = {}) {
+  const linking = !!client.token && !signIn;
+  try {
+    await (linking ? client.linkRedirect(provider, optsFor(provider)) : client.signInRedirect(provider, optsFor(provider)));
     return true;
+  } catch (e) {
+    if (e && e.fresh) { e.provider = provider; throw e; }
+    throw new Error((e && e.status && e.message) || NAMES[provider] + ' sign-in is unavailable right now');
   }
+}
 
-  // ── Nav: "Sign in", or the account's pictures ──
-  function renderNav() {
-    var list = document.querySelector('.nav-links');
-    if (!list) return;
-    var li = document.getElementById('nav-account');
-    if (!li) {
-      li = document.createElement('li');
-      li.id = 'nav-account';
-      list.appendChild(li);
-    }
-    var a = document.createElement('a');
-    a.href = 'account.html';
-    a.className = 'nav-account' + (/account\.html$/.test(location.pathname) ? ' active' : '');
-    var pics = pictures(state.user);
-    if (!state.user) {
-      a.textContent = 'Sign in';
-    } else {
-      var discord = pics.filter(function (p) { return p.provider !== 'steam'; })[0];
-      var steam = pics.filter(function (p) { return p.provider === 'steam'; })[0];
-      var mk = function (p) {
-        var img = document.createElement('img');
-        img.src = p.avatar; img.alt = ''; img.referrerPolicy = 'no-referrer';
-        img.className = 'nav-avatar'; img.setAttribute('data-provider', p.provider);
-        return img;
-      };
-      if (discord) a.appendChild(mk(discord));
-      a.appendChild(document.createTextNode('Account'));
-      if (steam) a.appendChild(mk(steam));
-      a.title = 'Signed in as ' + (state.user.name || '');
-    }
-    li.replaceChildren(a);
+/**
+ * "Confirm it's you": sign in again with one of this account's own sign-ins, then carry
+ * on with `then` ('link:steam' / 'link:discord') if it came back as the same account.
+ */
+const signInAgain = (provider, then) => client.confirmRedirect(provider, then, optsFor(provider));
+
+/** The combine screen's answer. ok: true combines the two accounts. → { status: 'combined' | 'cancelled' } */
+async function combine(id, ok) {
+  const out = await client.combine(id, ok === true);
+  if (out.error) throw new Error('That link has expired. Start it again from your profile.');
+  return out;
+}
+
+/** Remove a linked sign-in / separate a combined account. signed_out: this session ended with it. */
+async function undoNotice(id) {
+  const out = await client.undo(id);
+  if (out.error || !out.undone) throw new Error(out.error || 'That could not be undone.');
+  if (out.signed_out) client.signOut();
+  return out;
+}
+
+/**
+ * Discord's own consent-screen address, made ahead of the tap so the button can
+ * be a plain discord.com link: a tap on one can open the Discord app on a phone,
+ * already signed in, where our redirect would land on Discord's web login.
+ * Good for 8 minutes (the request lives 10). → Promise<string|null>
+ */
+let discordLink = { url: null, at: 0, key: '' };
+async function prepareDiscordLink() {
+  const key = discordScopes.join(' ');
+  try {
+    const d = await client.begin('discord', { mode: 'redirect', scopes: discordScopes.slice() });
+    if (key !== discordScopes.join(' ')) return null;   // switches changed while this was on its way
+    discordLink = d.authorize_url ? { url: d.authorize_url, at: Date.now(), key } : { url: null, at: 0, key: '' };
+  } catch (e) { discordLink = { url: null, at: 0, key: '' }; }
+  return discordLink.url;
+}
+const freshDiscordLink = () => (discordLink.url && discordLink.key === discordScopes.join(' ') && Date.now() - discordLink.at < 8 * 60 * 1000 ? discordLink.url : null);
+
+/** Delete the account and everything on it; the server needs the typed word. */
+async function deleteAccount(confirmWord) {
+  const out = await client.deleteAccount(confirmWord);
+  if (out.error) throw new Error(out.error);
+  return out;
+}
+
+// ── Nav: "Sign in", or the account's pictures ──
+function renderNav() {
+  const list = document.querySelector('.nav-links');
+  if (!list) return;
+  let li = document.getElementById('nav-account');
+  if (!li) {
+    li = document.createElement('li');
+    li.id = 'nav-account';
+    list.appendChild(li);
   }
-
-  load();
-  var cameBack = takeRedirect();
-  var linkResult = pendingLink ? completeLink(pendingLink) : null;
-  // Signed in, a link to another House Tandem site opens it signed in too:
-  // a one-time code rides along (the session itself never goes in a URL).
-  var HANDOFF_HOSTS = ['dice.housetandem.com', 'coins.housetandem.com'];
-  function handoffLinks(e) {
-    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
-    if (!a || !state.token || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    var url;
-    try { url = new URL(a.href); } catch (err) { return; }
-    if (url.protocol !== 'https:' || HANDOFF_HOSTS.indexOf(url.host) < 0) return;
-    e.preventDefault();
-    var newTab = a.target === '_blank';
-    var win = newTab ? window.open('', '_blank') : null;
-    var go = function (href) { if (win) win.location.href = href; else location.assign(href); };
-    api('/auth/handoff', { method: 'POST' }).then(function (d) {
-      if (d.code) url.searchParams.set('ht_code', d.code);
-      go(url.toString());
-    }, function () { go(a.href); });
+  const a = document.createElement('a');
+  a.href = 'account.html';
+  a.className = 'nav-account' + (/account\.html$/.test(location.pathname) ? ' active' : '');
+  const user = client.user;
+  if (!user || !client.token) {
+    a.textContent = 'Sign in';
+  } else {
+    const pics = pictures(user);
+    const discord = pics.filter((p) => p.provider !== 'steam')[0];
+    const steam = pics.filter((p) => p.provider === 'steam')[0];
+    const mk = (p) => {
+      const img = document.createElement('img');
+      img.src = p.avatar; img.alt = ''; img.referrerPolicy = 'no-referrer';
+      img.className = 'nav-avatar'; img.setAttribute('data-provider', p.provider);
+      return img;
+    };
+    if (discord) a.appendChild(mk(discord));
+    a.appendChild(document.createTextNode('Account'));
+    if (steam) a.appendChild(mk(steam));
+    a.title = 'Signed in as ' + (user.name || '');
   }
+  li.replaceChildren(a);
+}
 
-  listeners.push(renderNav);
-  document.addEventListener('click', handoffLinks);
-  document.addEventListener('DOMContentLoaded', function () {
-    renderNav();
-    if (state.token) refresh();
-  });
+// Signed in, a link to another House Tandem site opens it signed in too:
+// a one-time code rides along (the session itself never goes in a URL).
+const HANDOFF_HOSTS = ['dice.housetandem.com', 'coins.housetandem.com'];
+function handoffLinks(e) {
+  const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+  if (!a || !client.token || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  let url;
+  try { url = new URL(a.href); } catch (err) { return; }
+  if (url.protocol !== 'https:' || HANDOFF_HOSTS.indexOf(url.host) < 0) return;
+  e.preventDefault();
+  const win = a.target === '_blank' ? window.open('', '_blank') : null;
+  const go = (href) => { if (win) win.location.href = href; else location.assign(href); };
+  client.handoff().then((code) => {
+    if (code) url.searchParams.set('ht_code', code);
+    go(url.toString());
+  }, () => go(a.href));
+}
 
-  window.HTAccount = {
-    get user() { return state.user; },
-    get signedIn() { return !!state.token; },
-    cameBack: cameBack,
-    /** 'added' | 'already' | 'failed' | null: what signing in with Discord did about the House Tandem server. */
-    serverJoin: serverJoin,
-    prepareDiscordLink: prepareDiscordLink,
-    setDiscordScopes: setDiscordScopes,
-    freshDiscordLink: freshDiscordLink,
-    pictures: pictures,
-    refresh: refresh,
-    signInWithDiscord: signInWithDiscord,
-    signInWithSteam: signInWithSteam,
-    link: function (provider) { return goSignIn(provider); },
-    /** Back from a link: a Promise of its result (see completeLink), or null. */
-    linkResult: linkResult,
-    combine: combine,
-    signInAgain: signInAgain,
-    /** 'link:steam' / 'link:discord' when "Confirm it's you" came back as the same account. */
-    afterSignIn: afterSignIn,
-    /** A Discord sign-in found a verified Steam that has its own account (Link Steam combines them). */
-    steamHasAccount: steamHasAccount,
-    notices: notices,
-    noticeSeen: noticeSeen,
-    undoNotice: undoNotice,
-    signOut: signOut,
-    deleteAccount: deleteAccount,
-    /** Achievements and stats in the other House Tandem games: { dice: { earned: [{id, earnedAt}], stats } } */
-    games: function () { return state.token ? api('/me/games').then(function (d) { return d.games || {}; }) : Promise.resolve({}); },
-    /** Is the linked Discord in the House Tandem server? { linked, member: true|false|null, invite, server_url } */
-    discordMembership: function () { return state.token ? api('/me/discord') : Promise.resolve(null); },
-    onChange: function (fn) { listeners.push(fn); },
-  };
-})();
+// Back from Discord or Steam? #ht_auth=<token> signs in (from Discord, &ht_server=added|already|failed;
+// &ht_steam=has_account when its verified Steam has its own account). #ht_link=<id>.<code> is a link
+// to finish, which only this tab can. Both come off the URL straight away.
+const back = { cameBack: false, serverJoin: null, steamHasAccount: false, afterSignIn: null, linkResult: null };
+const ready = client.resume().then((res) => {
+  if (!res) return back;
+  if (res.signedIn) {
+    back.cameBack = true;
+    back.serverJoin = res.server || null;
+    back.steamHasAccount = res.steam === 'has_account';
+    back.afterSignIn = res.after || null;
+  } else if (res.link === 'linked') {
+    back.linkResult = { status: 'linked', steamHasAccount: res.steam === 'has_account' };
+  } else if (res.link === 'combine') {
+    back.linkResult = { status: 'combine', id: res.id, provider: res.provider, login: res.login, into: res.into, other: res.other };
+  } else {
+    // A link this tab did not begin, or one that ran out.
+    back.linkResult = { status: 'error', error: client.token ? 'That link has expired or was started in another browser or tab. Start it again here, from your profile.' : 'Sign in, then start the link again from your profile.' };
+  }
+  return back;
+}, () => back);
+
+client.onChange(renderNav);
+document.addEventListener('click', handoffLinks);
+document.addEventListener('DOMContentLoaded', () => {
+  renderNav();
+  ready.then(() => { if (client.token && !back.cameBack) refresh(); });
+});
+
+window.HTAccount = {
+  /** The IdentityClient itself, for the shared account elements. */
+  client,
+  get user() { return client.token ? client.user : null; },
+  get signedIn() { return !!client.token; },
+  /**
+   * Resolves once a return from Discord or Steam has been dealt with (at once when there
+   * was none). The fields below it are filled in by then.
+   */
+  ready,
+  /** Came back from a sign-in on this page load. */
+  get cameBack() { return back.cameBack; },
+  /** 'added' | 'already' | 'failed' | null: what signing in with Discord did about the House Tandem server. */
+  get serverJoin() { return back.serverJoin; },
+  /** Back from a link: { status: 'linked' } | { status: 'combine', id, provider, into, other } | { status: 'error', error }, or null. */
+  get linkResult() { return back.linkResult; },
+  /** 'link:steam' / 'link:discord' when "Confirm it's you" came back as the same account. */
+  get afterSignIn() { return back.afterSignIn; },
+  /** A Discord sign-in found a verified Steam that has its own account (Link Steam combines them). */
+  get steamHasAccount() { return back.steamHasAccount; },
+  prepareDiscordLink,
+  setDiscordScopes,
+  freshDiscordLink,
+  pictures,
+  refresh,
+  signInWithDiscord: () => goSignIn('discord', { signIn: true }),
+  signInWithSteam: () => goSignIn('steam', { signIn: true }),
+  link: (provider) => goSignIn(provider),
+  combine,
+  signInAgain,
+  notices: () => client.notices(),
+  noticeSeen: (id) => client.seen(id),
+  undoNotice,
+  signOut: () => client.signOut(),
+  deleteAccount,
+  /** Achievements, stats and time played in every House Tandem game: { dice: { earned: [{id, earnedAt}], stats } } */
+  games: () => client.games(),
+  /** Is the linked Discord in the House Tandem server? { linked, member: true|false|null, invite, server_url } */
+  discordMembership: () => client.membership(),
+  onChange: (fn) => client.onChange((user) => fn(client.token ? user : null)),
+};
