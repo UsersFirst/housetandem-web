@@ -67,7 +67,9 @@
           <li class="account-step">
             <span class="account-step-n" aria-hidden="true">2</span>
             <div class="account-step-body">
-              <p class="account-step-text"><b>Link your Steam account.</b> Then the playtest keeps your rides and achievements on this account.</p>
+              <!-- Linking needs an account, so this waits for step 1. Signed in, the working button is #step-steam-link below. -->
+              <button class="btn account-playtest account-discord-small account-step-locked" type="button" disabled aria-describedby="step-steam-locked">Link your Steam account</button>
+              <p class="account-step-text" id="step-steam-locked">Available after step 1. Linking keeps your playtest rides and achievements on this account.</p>
             </div>
           </li>
           <li class="account-step">

@@ -151,6 +151,7 @@
 .btn.account-playtest { display: inline-flex; align-items: center; gap: 0.6rem; background: #171a21; color: #fff; border: 1px solid #66c0f4; font-size: 1.05rem; padding: 0.85rem 1.2rem; }
 .btn.account-playtest:hover { background: #2a475e; color: #fff; }
 .btn.account-discord-small { font-size: 0.95rem; padding: 0.6rem 1rem; }
+.btn.account-step-locked:disabled, .btn.account-step-locked:disabled:hover { opacity: 0.5; cursor: not-allowed; background: #171a21; color: #fff; transform: none; box-shadow: none; }
 .account-server-open { font-size: 0.9rem; }
 .account-perms { width: 100%; font-size: 0.88rem; color: var(--text-secondary); }
 .account-perms summary { cursor: pointer; color: var(--text-muted); padding: 0.2rem 0; }
