@@ -359,11 +359,12 @@
   // Step 3's "Say hello" opens #welcome in Discord (the app on a phone). Empty: the server's default channel.
   var HELLO_URL = 'https://discord.com/channels/1560085412838379560/1560085413719187517';   // #welcome
 
-  /** Step 3, the House Tandem Discord: a member tick (+ Open Discord), or the invite. Hidden without Discord linked. */
+  /** Step 4, the House Tandem Discord: a member tick (+ a button into the server), or the invite. */
   function checkServer() {
     A.discordMembership().then(function (d) {
       var step = $('step-server');
-      if (!d || d.__status !== 200 || !d.linked) { step.hidden = true; return; }
+      // Always shown: without Discord linked, or if the check fails (null), it offers the invite.
+      if (!d || !d.linked) d = { member: false, said_hello: null };
       serverState = d.member;
       if (d.invite) $('account-server-join').href = d.invite;
       if (HELLO_URL || d.server_url) $('account-server-open').href = HELLO_URL || d.server_url;
@@ -372,7 +373,7 @@
       $('account-server-member').hidden = d.member !== true || hello;
       $('account-server-hello').hidden = !hello;
       $('account-server-open').hidden = d.member !== true;
-      $('account-server-open-label').textContent = hello ? 'Open the House Tandem Discord' : 'Say hello in the House Tandem Discord';
+      $('account-server-open-label').textContent = hello ? 'Come hang out in Discord' : 'Come say hi in Discord';
       $('account-server-join').hidden = d.member === true;
       step.classList.toggle('done', d.said_hello === null ? d.member === true : hello);
       step.hidden = false;
@@ -447,7 +448,7 @@
       A.setDiscordScopes(picked);
       var join = picked.indexOf('guilds.join') >= 0;
       $('step2-auto').hidden = !join;
-      $('step2-invite').hidden = join;
+      $('step2-invite').hidden = join; $('step4-label').textContent = join ? 'Come say hi in Discord' : 'Join our Discord and say hi';
       btn.href = 'account.html';
       ready();
     };
@@ -504,7 +505,7 @@
     $('step-steam-link').hidden = !!ids.steam;
     $('step-steam-hint').hidden = !!ids.steam;
     if (!ids.steam && A.steamHasAccount) {
-      $('step-steam-hint').textContent = 'Your Steam already has its own House Tandem account. Choose Link your Steam account to see both and combine them.';
+      $('step-steam-hint').textContent = 'Your Steam already has its own House Tandem account. Choose Sign in with Steam to see both and combine them.';
     }
     $('step-steam').classList.toggle('done', !!ids.steam);
 
