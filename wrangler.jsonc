@@ -1,12 +1,15 @@
 {
   // The website on Cloudflare. Build first: npm run build (or npm run build:staging).
-  // Production has no address here until the move from GitHub Pages is made.
   "name": "housetandem-web",
   "account_id": "87260c174f34fc18e96f2f47344e8d26",
   "main": "workers/site/index.js",
   "compatibility_date": "2026-11-01",
   "workers_dev": false,
   "preview_urls": false,
+  "routes": [
+    { "pattern": "housetandem.com", "custom_domain": true },
+    { "pattern": "www.housetandem.com", "custom_domain": true }
+  ],
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
@@ -16,6 +19,8 @@
   "env": {
     "staging": {
       "name": "housetandem-web-staging",
+      // Never the live addresses.
+      "routes": [],
       "workers_dev": true,
       "preview_urls": true,
       "assets": {
