@@ -12,7 +12,7 @@ const ASSET_DIRS = ['css', 'js', 'images', 'lib'];
 const NEVER_PUBLISHED = /\.(md|map|test\.[cm]?js)$/i;
 const API = {
   production: 'https://api.housetandem.com',
-  staging: 'https://tandemonium-api-staging.pete-872.workers.dev',
+  staging: 'https://api-staging.housetandem.com',
 };
 
 /** Top-level folders that are pages: each short link, plus any folder with its own index.html. */

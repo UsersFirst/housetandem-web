@@ -57,8 +57,8 @@ test('staging has its own API, no analytics, and is not indexed', () => {
   const { csp } = build({ env: 'staging', out });
   const config = fs.readFileSync(path.join(out, 'js', 'ht-config.js'), 'utf8');
   assert.ok(config.includes("window.HT_ANALYTICS.key = ''"));
-  assert.ok(config.includes('tandemonium-api-staging'));
-  assert.ok(!csp.includes('api.housetandem.com'));
+  assert.ok(config.includes('https://api-staging.housetandem.com'));
+  assert.ok(!csp.includes('https://api.housetandem.com'));
   assert.ok(fs.readFileSync(path.join(out, '_headers'), 'utf8').includes('X-Robots-Tag: noindex'));
 
   const prod = temp();
