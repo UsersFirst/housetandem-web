@@ -87,6 +87,34 @@
 
   if (!cfg.key || isOptedOut()) return;
 
+  // Sign-in values (ht_*) never leave in an event, whatever address PostHog read.
+  var URL_PROPS = ['$current_url', '$referrer', '$initial_current_url', '$initial_referrer', '$session_entry_url', '$session_entry_referrer', '$prev_pageview_pathname'];
+  function cleanUrl(value) {
+    if (typeof value !== 'string' || value.indexOf('ht_') < 0) return value;
+    try {
+      var u = new URL(value, location.origin);
+      var drop = [];
+      u.searchParams.forEach(function (v, k) { if (k.indexOf('ht_') === 0) drop.push(k); });
+      drop.forEach(function (k) { u.searchParams.delete(k); });
+      if (u.hash.indexOf('ht_') >= 0) u.hash = '';
+      return u.toString();
+    } catch (e) { return null; }
+  }
+  function cleanProps(props) {
+    if (!props) return;
+    for (var i = 0; i < URL_PROPS.length; i++) {
+      if (URL_PROPS[i] in props) props[URL_PROPS[i]] = cleanUrl(props[URL_PROPS[i]]);
+    }
+  }
+  function beforeSend(event) {
+    if (!event) return event;
+    cleanProps(event.properties);
+    cleanProps(event.$set);
+    cleanProps(event.$set_once);
+    return event;
+  }
+  window.HT.cleanEvent = beforeSend;
+
   var s = document.createElement('script');
   s.async = true;
   s.src = HOST + '/static/array.js';
@@ -101,6 +129,7 @@
       autocapture: false,
       capture_pageview: false,
       disable_session_recording: true,
+      before_send: beforeSend,
       loaded: function (p) {
         ph = p;
         p.register({
