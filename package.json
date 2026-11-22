@@ -2,7 +2,7 @@
   "name": "housetandem-web",
   "private": true,
   "scripts": {
-    "test": "node --test test/links.test.js test/geo.test.mjs test/site-build.test.mjs",
+    "test": "node --test test/links.test.js test/geo.test.mjs test/site-build.test.mjs test/e-proxy.test.mjs",
     "links": "node tools/build-links.js",
     "check:links": "node tools/build-links.js --check",
     "build": "node tools/build-site.js",

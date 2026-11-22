@@ -1,0 +1,2 @@
+# The pinned analytics SDK is kept byte for byte (its stamp records its hash).
+js/vendor/posthog-array.js -text
