@@ -1,0 +1,56 @@
+name: Deploy site
+# Third-party actions are pinned to a commit (the tag is in the comment).
+# main -> tests -> staging -> checks on staging -> production.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: false
+
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      - run: npm test
+      - run: npm run check:links
+      - run: npm run build:staging
+      - name: Deploy to staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx --yes wrangler@4.166.0 deploy --env staging
+      - name: Check staging answers
+        run: node tools/check-site.js https://housetandem-web-staging.pete-872.workers.dev
+
+  production:
+    needs: staging
+    # Stays off until the site has moved from GitHub Pages (repository variable).
+    if: vars.CF_PRODUCTION_LIVE == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      - run: npm run build
+      - name: Deploy to production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx --yes wrangler@4.166.0 deploy
+      - name: Check production answers
+        run: node tools/check-site.js https://housetandem.com
