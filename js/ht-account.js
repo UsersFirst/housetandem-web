@@ -8,6 +8,7 @@
 // A module: it runs before DOMContentLoaded, after the page's classic scripts. Anything that
 // depends on coming back from Discord or Steam waits for HTAccount.ready.
 import { IdentityClient, loginPictures } from '../lib/identity/client.js';
+import { askInPage } from '../lib/identity/elements/ask-switch.js';
 
 // House Tandem's own address for the API (its workers.dev address looked like phishing on Discord's consent screen).
 const API = window.HT_API || 'https://api.housetandem.com';
@@ -24,7 +25,7 @@ const pageLoc = captured ? {
 const pageHist = captured ? {
   replaceState(_s, _t, url) { const u = new URL(url, location.href); pageLoc.search = u.search; pageLoc.hash = u.hash; },
 } : null;
-const client = new IdentityClient({ apiBase: API, ...(captured ? { location: pageLoc, history: pageHist } : {}) });
+const client = new IdentityClient({ apiBase: API, confirmSwitch: askInPage, ...(captured ? { location: pageLoc, history: pageHist } : {}) });
 // A stored session past its date is no session.
 if (client.token && client.tokenExpired()) client.signOut();
 
@@ -85,6 +86,25 @@ async function undoNotice(id) {
   if (out.error || !out.undone) throw Object.assign(new Error(out.error || 'That could not be undone.'), { fresh: !!out.fresh });
   if (out.signed_out) client.signOut();
   return out;
+}
+
+/**
+ * Gameplay analytics: the account's one answer, used by every House Tandem game.
+ * → { consent: { choice, version, at } | null, required, version } or null (not reachable).
+ */
+async function analyticsConsent() {
+  if (!client.token) return null;
+  const r = await client.api('/me/consent').catch(() => null);
+  return r && r.ok ? r.data : null;
+}
+
+/** Change the account's answer. A new answer takes the place of the earlier one. → the account's answer now */
+async function setAnalyticsConsent(on, version) {
+  if (!client.token) throw new Error('Sign in first');
+  const id = (crypto.randomUUID && crypto.randomUUID()) || '';
+  const r = await client.api('/consent', { method: 'POST', auth: false, body: { id, choice: on ? 'accept' : 'decline', version, account_token: client.token } }).catch(() => null);
+  if (!r || !r.ok || !r.data.consent) throw new Error('That did not save. Try again in a moment.');
+  return r.data.consent;
 }
 
 /** End every session of this account, on every device. */
@@ -158,12 +178,41 @@ function renderNav() {
   li.replaceChildren(a);
 }
 
+/**
+ * The sign-in here is too old to carry over to another site. A short note under the link:
+ * sign in again (then the link carries it), or open the game as it is. → true when shown.
+ */
+function staleHandoff(a, href, win) {
+  if (win) { try { win.close(); } catch (e) { /* the note is on this page */ } }
+  const old = document.getElementById('ht-handoff-note');
+  if (old) old.remove();
+  const note = document.createElement('p');
+  note.id = 'ht-handoff-note';
+  note.className = 'account-ok';
+  note.setAttribute('role', 'status');
+  note.textContent = 'You signed in here over an hour ago, so the game would open signed out. ';
+  const again = document.createElement('a');
+  again.href = 'account.html';
+  again.textContent = 'Sign in again';
+  again.addEventListener('click', (e) => { e.preventDefault(); client.signOut(); location.assign('account.html'); });
+  const open = document.createElement('a');
+  open.href = href;
+  if (a.target) open.target = a.target;
+  open.rel = 'noopener';
+  open.dataset.htPlain = '1';
+  open.textContent = 'open it anyway';
+  note.append(again, ' to carry your sign-in over, or ', open, '.');
+  const host = a.closest('li, p, div') || a;
+  host.insertAdjacentElement('afterend', note);
+  return true;
+}
+
 // Signed in, a link to another House Tandem site opens it signed in too:
 // a one-time code rides along (the session itself never goes in a URL).
 const HANDOFF_HOSTS = ['dice.housetandem.com', 'coins.housetandem.com'];
 function handoffLinks(e) {
   const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
-  if (!a || !client.token || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  if (!a || a.dataset.htPlain || !client.token || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
   let url;
   try { url = new URL(a.href); } catch (err) { return; }
   if (url.protocol !== 'https:' || HANDOFF_HOSTS.indexOf(url.host) < 0) return;
@@ -172,6 +221,8 @@ function handoffLinks(e) {
   const go = (href) => { if (win) win.location.href = href; else location.assign(href); };
   client.handoff().then((code) => {
     if (code) url.searchParams.set('ht_code', code);
+    // No code because this sign-in is over an hour old: say so, and let the player choose.
+    else if (client.handoffStale && staleHandoff(a, url.toString(), win)) return;
     go(url.toString());
   }, () => go(a.href));
 }
@@ -246,6 +297,8 @@ window.HTAccount = {
   undoNotice,
   signOut: () => client.signOut(),
   signOutEverywhere,
+  analyticsConsent,
+  setAnalyticsConsent,
   deleteAccount,
   /** Achievements, stats and time played in every House Tandem game: { dice: { earned: [{id, earnedAt}], stats } } */
   games: () => client.games(),

@@ -56,11 +56,16 @@ function inlineScriptHashes(html) {
   return hashes;
 }
 
-function contentSecurityPolicy(hashes, api) {
+// Cloudflare Web Analytics (issue #59): Cloudflare adds its beacon to the pages it serves.
+// Only these two hosts, only on production, and never on the account page.
+const CF_BEACON_SCRIPT = 'https://static.cloudflareinsights.com';
+const CF_BEACON_REPORT = 'https://cloudflareinsights.com';
+
+function contentSecurityPolicy(hashes, api, { beacon = false } = {}) {
   return [
     "default-src 'self'",
-    `script-src 'self' https://e.housetandem.com ${hashes.join(' ')}`.trim(),
-    `connect-src 'self' ${api} https://e.housetandem.com https://tandemonium.housetandem.com https://dice.housetandem.com https://coins.housetandem.com`,
+    `script-src 'self' https://e.housetandem.com ${beacon ? CF_BEACON_SCRIPT + ' ' : ''}${hashes.join(' ')}`.trim(),
+    `connect-src 'self' ${api} https://e.housetandem.com ${beacon ? CF_BEACON_REPORT + ' ' : ''}https://tandemonium.housetandem.com https://dice.housetandem.com https://coins.housetandem.com`,
     "img-src 'self' data: https:",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
@@ -72,7 +77,7 @@ function contentSecurityPolicy(hashes, api) {
   ].join('; ');
 }
 
-function headersFile(csp, env) {
+function headersFile(csp, env, accountCsp) {
   const lines = [
     '/*',
     `  Content-Security-Policy: ${csp}`,
@@ -83,6 +88,9 @@ function headersFile(csp, env) {
     '  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()',
   ];
   if (env !== 'production') lines.push('  X-Robots-Tag: noindex, nofollow');
+  // The account page gets a whole policy of its own, without the beacon's hosts. Where the
+  // host joins it to the one above, a browser enforces both, which comes to the same thing.
+  if (accountCsp && accountCsp !== csp) lines.push('', '/account*', `  Content-Security-Policy: ${accountCsp}`);
   return lines.join('\n') + '\n';
 }
 
@@ -105,9 +113,10 @@ function build({ env = 'production', out = path.join(ROOT, 'public') } = {}) {
 
   const hashes = new Set();
   for (const f of htmlFiles(out)) for (const h of inlineScriptHashes(fs.readFileSync(f, 'utf8'))) hashes.add(h);
-  const csp = contentSecurityPolicy([...hashes].sort(), API[env]);
-  fs.writeFileSync(path.join(out, '_headers'), headersFile(csp, env));
-  return { out, csp, pages: htmlFiles(out).length };
+  const accountCsp = contentSecurityPolicy([...hashes].sort(), API[env]);
+  const csp = contentSecurityPolicy([...hashes].sort(), API[env], { beacon: env === 'production' });
+  fs.writeFileSync(path.join(out, '_headers'), headersFile(csp, env, accountCsp));
+  return { out, csp, accountCsp, pages: htmlFiles(out).length };
 }
 
 if (require.main === module) {
