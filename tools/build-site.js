@@ -60,7 +60,7 @@ function contentSecurityPolicy(hashes, api) {
   return [
     "default-src 'self'",
     `script-src 'self' https://e.housetandem.com ${hashes.join(' ')}`.trim(),
-    `connect-src 'self' ${api} https://e.housetandem.com https://dice.housetandem.com https://coins.housetandem.com`,
+    `connect-src 'self' ${api} https://e.housetandem.com https://tandemonium.housetandem.com https://dice.housetandem.com https://coins.housetandem.com`,
     "img-src 'self' data: https:",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",

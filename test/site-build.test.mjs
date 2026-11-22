@@ -50,6 +50,8 @@ test('the policy allows each inline script and blocks framing', () => {
   const script = csp.split('; ').find((d) => d.startsWith('script-src'));
   assert.ok(!script.includes('unsafe-inline') && !script.includes('unsafe-eval'));
   for (const d of ["frame-ancestors 'none'", "object-src 'none'", "base-uri 'none'"]) assert.ok(csp.includes(d), d);
+  const connect = csp.split('; ').find((d) => d.startsWith('connect-src'));
+  for (const h of ['tandemonium', 'dice', 'coins']) assert.ok(connect.includes('https://' + h + '.housetandem.com'), h + ' achievements');
 });
 
 test('staging has its own API, no analytics, and is not indexed', () => {
