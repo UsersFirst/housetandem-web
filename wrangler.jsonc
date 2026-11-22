@@ -19,8 +19,8 @@
   "env": {
     "staging": {
       "name": "housetandem-web-staging",
-      // Never the live addresses.
-      "routes": [],
+      // Its own address, never the live ones.
+      "routes": [{ "pattern": "staging.housetandem.com", "custom_domain": true }],
       "workers_dev": true,
       "preview_urls": true,
       "assets": {
