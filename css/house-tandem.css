@@ -113,6 +113,9 @@
 .account-lede { color: var(--text-secondary); max-width: 34ch; }
 .account-note { color: var(--text-muted); font-size: 0.9rem; max-width: 40ch; }
 .account-note strong { color: var(--text-secondary); }
+.account-analytics { margin: 1.25rem 0; }
+.account-analytics label { display: flex; gap: 0.55rem; align-items: flex-start; color: var(--text-secondary); }
+.account-analytics input { margin-top: 0.25rem; accent-color: #5865f2; flex: none; }
 .account-error { color: #ff7a7a; font-size: 0.95rem; }
 .account-error[hidden] { display: none; }
 .btn.account-discord {

@@ -353,6 +353,21 @@
     line.textContent = total ? fmtPlayed(total) + ' played' + (n > 1 ? ' across ' + n + ' games' : '') : '';
   }
 
+  // Gameplay analytics: the account's one answer, for every House Tandem game.
+  var consentVersion = null;
+  function renderAnalytics() {
+    var box = $('account-analytics');
+    box.hidden = true;
+    A.analyticsConsent().then(function (c) {
+      if (!c || !A.user) return;
+      consentVersion = c.version;
+      // Shown once there is an answer to change, or where players are asked for one.
+      if (!c.consent && !c.required) return;
+      $('account-analytics-on').checked = !!(c.consent && c.consent.choice === 'accept');
+      box.hidden = false;
+    });
+  }
+
   function renderGames() {
     var gamesP = A.games().catch(function () { return {}; });
     gamesP.then(function (games) { renderTandemonium(games); renderSummary(games); });
@@ -496,6 +511,7 @@
     $('account-signin').hidden = !!user;
     $('account-profile').hidden = !user;
     if (!user) return;
+    renderAnalytics();
 
     // One line per linked account: platform icon, name, picture; a Link button for a missing one.
     var card = $('account-identities');
@@ -575,6 +591,21 @@
       A.signOut();
       render(null);
       A.prepareDiscordLink().then(function (url) { if (url) $('account-discord-btn').href = url; });
+    });
+    $('account-analytics-on').addEventListener('change', function () {
+      var box = this;
+      var err = $('account-analytics-error');
+      err.hidden = true;
+      box.disabled = true;
+      A.setAnalyticsConsent(box.checked, consentVersion).then(function (c) {
+        box.checked = c.choice === 'accept';
+        box.disabled = false;
+      }).catch(function (e) {
+        box.checked = !box.checked;
+        box.disabled = false;
+        err.textContent = e.message;
+        err.hidden = false;
+      });
     });
     $('account-signout-all').addEventListener('click', function () {
       var btn = this;

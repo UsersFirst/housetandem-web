@@ -88,6 +88,25 @@ async function undoNotice(id) {
   return out;
 }
 
+/**
+ * Gameplay analytics: the account's one answer, used by every House Tandem game.
+ * → { consent: { choice, version, at } | null, required, version } or null (not reachable).
+ */
+async function analyticsConsent() {
+  if (!client.token) return null;
+  const r = await client.api('/me/consent').catch(() => null);
+  return r && r.ok ? r.data : null;
+}
+
+/** Change the account's answer. A new answer takes the place of the earlier one. → the account's answer now */
+async function setAnalyticsConsent(on, version) {
+  if (!client.token) throw new Error('Sign in first');
+  const id = (crypto.randomUUID && crypto.randomUUID()) || '';
+  const r = await client.api('/consent', { method: 'POST', auth: false, body: { id, choice: on ? 'accept' : 'decline', version, account_token: client.token } }).catch(() => null);
+  if (!r || !r.ok || !r.data.consent) throw new Error('That did not save. Try again in a moment.');
+  return r.data.consent;
+}
+
 /** End every session of this account, on every device. */
 async function signOutEverywhere() {
   const out = await client.signOutEverywhere();
@@ -278,6 +297,8 @@ window.HTAccount = {
   undoNotice,
   signOut: () => client.signOut(),
   signOutEverywhere,
+  analyticsConsent,
+  setAnalyticsConsent,
   deleteAccount,
   /** Achievements, stats and time played in every House Tandem game: { dice: { earned: [{id, earnedAt}], stats } } */
   games: () => client.games(),

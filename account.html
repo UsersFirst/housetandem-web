@@ -205,6 +205,13 @@
         <div id="account-games"></div>
 
         <p class="account-note" id="account-link-note" hidden>Link the other one and it joins this account: rides, achievements and both pictures. If it already has its own account, you'll see both and choose whether to combine them.</p>
+        <!-- Gameplay analytics: one answer for the account, used by every House Tandem game. Shown
+             once the account has an answer, or where players are asked (EEA, UK, Switzerland). -->
+        <div class="account-analytics" id="account-analytics" hidden>
+          <label><input type="checkbox" id="account-analytics-on"> Share how I play, to help improve House Tandem games</label>
+          <p class="account-note">One answer for your account, used by all our games. Your account, rides and achievements are saved either way. <a href="privacy.html">Privacy</a></p>
+          <p class="account-error" id="account-analytics-error" role="alert" hidden></p>
+        </div>
         <button class="btn account-signout" id="account-signout" type="button">Sign out</button>
         <button class="btn account-signout" id="account-signout-all" type="button">Sign out everywhere</button>
 
