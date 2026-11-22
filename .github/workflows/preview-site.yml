@@ -1,0 +1,54 @@
+name: Preview site
+# Publishes a PR's already-built static files to its own address on the staging Worker.
+# workflow_run runs THIS file from main, so a branch cannot change what runs with the token.
+# Only the built files come from the branch; the Worker and its config come from main.
+on:
+  workflow_run:
+    workflows: [test]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  preview:
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: preview
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      - name: Fetch the built files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          rm -rf public incoming
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name site-preview --dir incoming
+          n=$(cat incoming/pr-number.txt)
+          if ! printf '%s' "$n" | grep -Eq '^[0-9]{1,6}$'; then echo "::error::Bad PR number"; exit 1; fi
+          echo "PR_NUMBER=$n" >> "$GITHUB_ENV"
+          mv incoming/public public
+          # Static files only.
+          rm -f public/_worker.js public/_routes.json
+      - name: Publish the preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx --yes wrangler@4.166.0 versions upload --env staging --preview-alias "pr-$PR_NUMBER"
+      - name: Link it on the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          url="https://pr-$PR_NUMBER-housetandem-web-staging.pete-872.workers.dev"
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --edit-last --body "Preview: $url" \
+            || gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "Preview: $url"
