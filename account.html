@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- Sign-in values leave the address before anything else on the page runs. -->
+  <script>(function(){try{var l=location,d=function(p){var k=[];p.forEach(function(v,n){if(n.indexOf('ht_')===0)k.push(n)});k.forEach(function(n){p.delete(n)});return k.length},h=new URLSearchParams(l.hash.slice(1)),q=new URLSearchParams(l.search),o=l.hash,a=d(h),b=d(q);if(a||b){if(a)window.__htBack={hash:o};var s=q.toString(),f=h.toString();history.replaceState(null,'',l.pathname+(s?'?'+s:'')+(a?(f?'#'+f:''):l.hash))}}catch(e){}})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Join House Tandem</title>
   <meta name="description" content="Join House Tandem: sign in with Discord to join our server, get the free Tandemonium playtest on Steam, and keep your rides and achievements in one account.">
@@ -117,7 +119,7 @@
         <p class="account-ok" id="account-link-ok" role="status" hidden></p>
         <!-- Linking needs a sign-in from the last 10 minutes (Tandemonium #612). -->
         <div class="account-fresh" id="account-fresh" role="alert" hidden>
-          <p><b>Confirm it's you.</b> For your safety, sign in again before linking another account.</p>
+          <p><b>Confirm it's you.</b> For your safety, sign in again before making this change.</p>
           <button class="btn account-discord account-discord-small" id="account-fresh-btn" type="button">Sign in again</button>
         </div>
         <!-- A sign-in linked or an account combined in, in the last 7 days: each can be undone. -->
@@ -202,6 +204,7 @@
 
         <p class="account-note" id="account-link-note" hidden>Link the other one and it joins this account: rides, achievements and both pictures. If it already has its own account, you'll see both and choose whether to combine them.</p>
         <button class="btn account-signout" id="account-signout" type="button">Sign out</button>
+        <button class="btn account-signout" id="account-signout-all" type="button">Sign out everywhere</button>
 
         <div class="account-danger">
           <h2>Delete account</h2>
@@ -279,7 +282,6 @@
   </footer>
 
   <script src="js/ht-config.js"></script>
-  <script src="js/ht-analytics.js"></script>
   <script type="module" src="js/ht-account.js"></script>
   <script src="js/main.js"></script>
   <script type="module" src="js/account-page.js"></script>

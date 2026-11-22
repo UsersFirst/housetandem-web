@@ -74,8 +74,9 @@
   var NAME = { discord: 'Discord', steam: 'Steam', google: 'Google' };
 
   /**
-   * "Confirm it's you": linking needs a sign-in from the last 10 minutes. Sign in again with
-   * a sign-in this account already has; back here, the link starts by itself (HTAccount.afterSignIn).
+   * "Confirm it's you": linking, undoing and deleting need a sign-in from the last 10 minutes.
+   * Sign in again with a sign-in this account already has; back here, a link starts by itself
+   * (HTAccount.afterSignIn). With no `target`, the player repeats what they were doing.
    */
   function showFresh(target) {
     var ids = (A.user && A.user.identities) || {};
@@ -83,7 +84,7 @@
     var btn = $('account-fresh-btn');
     btn.textContent = 'Sign in again with ' + NAME[again];
     btn.className = 'btn account-discord-small ' + (again === 'steam' ? 'account-playtest' : 'account-discord');
-    btn.onclick = function () { go(btn, function () { return A.signInAgain(again, 'link:' + target); }); };
+    btn.onclick = function () { go(btn, function () { return A.signInAgain(again, target ? 'link:' + target : undefined); }); };
     $('account-fresh').hidden = false;
     $('account-fresh').scrollIntoView({ block: 'center' });
   }
@@ -149,7 +150,11 @@
             }
             say(n.kind === 'combine' ? 'Separated. Each account has its own rides and badges again.' : 'Removed.');
             A.refresh().then(function (me) { lastMe = me; render(me); renderGames(); loadNotices(); });
-          }).catch(function (e) { item.busy = false; item.error = e.message; });
+          }).catch(function (e) {
+            item.busy = false;
+            if (e.fresh) { showFresh(); return; }
+            item.error = e.message;
+          });
         });
         item.addEventListener('uf-notice-ok', function () { item.busy = true; A.noticeSeen(n.id).then(loadNotices); });
         ul.appendChild(item);
@@ -538,6 +543,10 @@
         else if (res.status === 'linked') say('Linked. Both sign-ins now open this account.');
         else sayError(res.error);
       }
+      if (A.signInError) {
+        if (A.signedIn) sayError(A.signInError);
+        else { $('account-error').textContent = A.signInError; $('account-error').hidden = false; }
+      }
       // "Confirm it's you" came back as the same account: start the link they asked for.
       if (A.afterSignIn && /^link:(steam|discord)$/.test(A.afterSignIn)) {
         var target = A.afterSignIn.slice(5);
@@ -566,6 +575,17 @@
       A.signOut();
       render(null);
       A.prepareDiscordLink().then(function (url) { if (url) $('account-discord-btn').href = url; });
+    });
+    $('account-signout-all').addEventListener('click', function () {
+      var btn = this;
+      if (!window.confirm('Sign out of House Tandem on every device, this one included?')) return;
+      btn.disabled = true;
+      sayError('');
+      A.signOutEverywhere().then(function () {
+        btn.disabled = false;
+        render(null);
+        A.prepareDiscordLink().then(function (url) { if (url) $('account-discord-btn').href = url; });
+      }).catch(function (e) { btn.disabled = false; sayError(e.message); });
     });
 
     // Delete: a strict warning in a dialog, and the word DELETE typed out.
@@ -596,6 +616,7 @@
       }).catch(function (e) {
         final.textContent = 'Delete everything';
         final.disabled = false;
+        if (e.fresh) { dlg.close(); showFresh(); return; }
         $('delete-error').textContent = e.message;
         $('delete-error').hidden = false;
       });

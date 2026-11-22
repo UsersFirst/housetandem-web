@@ -75,7 +75,7 @@ const combineAnswer = { status: 'combine', provider: 'steam',
   other: { name: 'Old Steam Goose', avatar: null, logins: [{ provider: 'steam' }], rides: 40, badges: 9, games: [{ game: 'dice', title: '7, 11, Doubles', badges: 1 }] } };
 
 /** A page with the fixtures answering, and a log of the API calls it made. */
-async function open(viewport, { signedIn = true, discordOnly = false, hash = '', pendingLink = false } = {}) {
+async function open(viewport, { signedIn = true, discordOnly = false, hash = '', pendingLink = false, pendingSignIn = false } = {}) {
   const page = await browser.newPage();
   await page.setViewport(viewport);
   const errors = [];
@@ -98,6 +98,7 @@ async function open(viewport, { signedIn = true, discordOnly = false, hash = '',
       if (u.pathname === '/me/notices/seen') return json({ ok: true });
       if (u.pathname === '/me/discord') return json({ linked: true, member: true });
       if (u.pathname === '/auth/discord/begin') return json({ id: 'req9', secret: 's9', url: 'https://api.housetandem.com/auth/discord/go?r=req9', authorize_url: 'https://discord.com/oauth2/authorize?client_id=1&state=req9', expires_in: 600 });
+      if (u.pathname === '/auth/exchange') return body.nonce === 'tab-value' ? json({ token, user: who, server: 'added' }) : json({ code: 'signin_mismatch', error: 'gone' }, 403);
       if (u.pathname === '/auth/link/complete') return json(body.secret === 'tab-secret' ? combineAnswer : { error: 'gone' }, body.secret === 'tab-secret' ? 200 : 410);
       if (u.pathname === '/auth/link/combine') return json({ status: body.ok ? 'combined' : 'cancelled' });
       return json({});
@@ -106,6 +107,9 @@ async function open(viewport, { signedIn = true, discordOnly = false, hash = '',
     if (u.hostname === 'dice.housetandem.com') return json(FIX.dice);
     return req.abort();   // analytics, fonts, the other games: not this check
   });
+  if (pendingSignIn) {
+    await page.evaluateOnNewDocument(() => sessionStorage.setItem('ht_signin_pending', JSON.stringify({ req9: { n: 'tab-value', at: Date.now() } })));
+  }
   await page.evaluateOnNewDocument((t, u, pending) => {
     // Every page here shares one browser profile: start each from a known state.
     if (t) { localStorage.setItem('ht_auth_token', t); localStorage.setItem('ht_auth_user', JSON.stringify(u)); }
@@ -133,8 +137,17 @@ async function runAccount() {
   clean(o);
   await o.page.close();
 
-  // Back from Discord with a session in the address: signed in, the address cleaned.
-  o = await open({ width: 1280, height: 900 }, { signedIn: false, hash: '#ht_auth=' + encodeURIComponent(token) + '&ht_server=added' });
+  // A result this browser did not begin: refused, nobody signed in, the address cleaned.
+  o = await open({ width: 1280, height: 900 }, { signedIn: false, hash: '#ht_result=elsewhere.c0de' });
+  v = await o.page.evaluate(() => ({ profile: !document.getElementById('account-profile').hidden, hash: location.hash,
+    stored: !!localStorage.getItem('ht_auth_token'), err: document.getElementById('account-error').textContent }));
+  ok(!v.profile && !v.stored && v.hash === '' && /another browser/.test(v.err), 'a sign-in begun elsewhere is refused, with a message');
+  ok(!o.calls.some((c) => c.path === '/auth/exchange'), 'it never reaches the server');
+  clean(o);
+  await o.page.close();
+
+  // Back from Discord with a code this tab began: signed in, the address cleaned.
+  o = await open({ width: 1280, height: 900 }, { signedIn: false, pendingSignIn: true, hash: '#ht_result=req9.c0de' });
   v = await o.page.evaluate(() => ({ profile: !document.getElementById('account-profile').hidden, hash: location.hash, nav: document.getElementById('nav-account').textContent.trim(),
     stored: !!localStorage.getItem('ht_auth_token') }));
   ok(v.profile && v.stored && v.nav === 'Account', 'back from Discord: signed in, the profile shows, the nav says Account');

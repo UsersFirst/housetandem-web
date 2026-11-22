@@ -13,7 +13,18 @@ import { IdentityClient, loginPictures } from '../lib/identity/client.js';
 const API = window.HT_API || 'https://api.housetandem.com';
 const NAMES = { discord: 'Discord', steam: 'Steam' };
 
-const client = new IdentityClient({ apiBase: API });
+// The page's first script already took any ht_* values off the address (so nothing else on
+// the page can read them) and left the fragment here for the client to finish.
+const captured = window.__htBack || null;
+delete window.__htBack;
+const pageLoc = captured ? {
+  origin: location.origin, pathname: location.pathname, search: location.search, hash: captured.hash,
+  assign: (u) => location.assign(u),
+} : null;
+const pageHist = captured ? {
+  replaceState(_s, _t, url) { const u = new URL(url, location.href); pageLoc.search = u.search; pageLoc.hash = u.hash; },
+} : null;
+const client = new IdentityClient({ apiBase: API, ...(captured ? { location: pageLoc, history: pageHist } : {}) });
 // A stored session past its date is no session.
 if (client.token && client.tokenExpired()) client.signOut();
 
@@ -71,8 +82,15 @@ async function combine(id, ok) {
 /** Remove a linked sign-in / separate a combined account. signed_out: this session ended with it. */
 async function undoNotice(id) {
   const out = await client.undo(id);
-  if (out.error || !out.undone) throw new Error(out.error || 'That could not be undone.');
+  if (out.error || !out.undone) throw Object.assign(new Error(out.error || 'That could not be undone.'), { fresh: !!out.fresh });
   if (out.signed_out) client.signOut();
+  return out;
+}
+
+/** End every session of this account, on every device. */
+async function signOutEverywhere() {
+  const out = await client.signOutEverywhere();
+  if (out.error) throw new Error(out.error);
   return out;
 }
 
@@ -86,18 +104,23 @@ let discordLink = { url: null, at: 0, key: '' };
 async function prepareDiscordLink() {
   const key = discordScopes.join(' ');
   try {
-    const d = await client.begin('discord', { mode: 'redirect', scopes: discordScopes.slice() });
+    // anyTab: on a phone the Discord app can hand the answer back to a new tab of this browser.
+    const d = await client.begin('discord', { mode: 'redirect', scopes: discordScopes.slice(), anyTab: true });
     if (key !== discordScopes.join(' ')) return null;   // switches changed while this was on its way
     discordLink = d.authorize_url ? { url: d.authorize_url, at: Date.now(), key } : { url: null, at: 0, key: '' };
   } catch (e) { discordLink = { url: null, at: 0, key: '' }; }
   return discordLink.url;
 }
-const freshDiscordLink = () => (discordLink.url && discordLink.key === discordScopes.join(' ') && Date.now() - discordLink.at < 8 * 60 * 1000 ? discordLink.url : null);
+// A sign-in that came back to a browser that didn't begin it (an in-app browser, say): from
+// here this tab uses the plain redirect, which stays in one browser from start to finish.
+const NO_APP_LINK = 'ht_no_app_link';
+const appLinkOff = () => { try { return sessionStorage.getItem(NO_APP_LINK) === '1'; } catch (e) { return false; } };
+const freshDiscordLink = () => (!appLinkOff() && discordLink.url && discordLink.key === discordScopes.join(' ') && Date.now() - discordLink.at < 8 * 60 * 1000 ? discordLink.url : null);
 
-/** Delete the account and everything on it; the server needs the typed word. */
+/** Delete the account and everything on it; the server needs the typed word and a recent sign-in. */
 async function deleteAccount(confirmWord) {
   const out = await client.deleteAccount(confirmWord);
-  if (out.error) throw new Error(out.error);
+  if (out.error) throw Object.assign(new Error(out.error), { fresh: !!out.fresh });
   return out;
 }
 
@@ -153,10 +176,10 @@ function handoffLinks(e) {
   }, () => go(a.href));
 }
 
-// Back from Discord or Steam? #ht_auth=<token> signs in (from Discord, &ht_server=added|already|failed;
-// &ht_steam=has_account when its verified Steam has its own account). #ht_link=<id>.<code> is a link
-// to finish, which only this tab can. Both come off the URL straight away.
-const back = { cameBack: false, serverJoin: null, steamHasAccount: false, afterSignIn: null, linkResult: null };
+// Back from Discord or Steam? #ht_result=<id>.<code> is swapped for a session, with the value
+// this browser kept; what happened (the server join, a Steam with its own account) comes from
+// that answer. #ht_link=<id>.<code> is a link to finish, which only this tab can.
+const back = { cameBack: false, serverJoin: null, steamHasAccount: false, afterSignIn: null, linkResult: null, signInError: null };
 const ready = client.resume().then((res) => {
   if (!res) return back;
   if (res.signedIn) {
@@ -168,6 +191,10 @@ const ready = client.resume().then((res) => {
     back.linkResult = { status: 'linked', steamHasAccount: res.steam === 'has_account' };
   } else if (res.link === 'combine') {
     back.linkResult = { status: 'combine', id: res.id, provider: res.provider, login: res.login, into: res.into, other: res.other };
+  } else if (res.signedIn === false) {
+    // Nothing changed here. Declining a switch of account needs no message.
+    if (res.mismatch) { try { sessionStorage.setItem(NO_APP_LINK, '1'); } catch (e) { /* blocked */ } }
+    if (!res.declined) back.signInError = res.error === 'offline' ? 'You seem to be offline. Try signing in again.' : (res.error || 'That sign-in has expired. Start it again.');
   } else {
     // A link this tab did not begin, or one that ran out.
     back.linkResult = { status: 'error', error: client.token ? 'That link has expired or was started in another browser or tab. Start it again here, from your profile.' : 'Sign in, then start the link again from your profile.' };
@@ -198,6 +225,8 @@ window.HTAccount = {
   get serverJoin() { return back.serverJoin; },
   /** Back from a link: { status: 'linked' } | { status: 'combine', id, provider, into, other } | { status: 'error', error }, or null. */
   get linkResult() { return back.linkResult; },
+  /** A sign-in that came back and was not accepted: what to tell the player, or null. */
+  get signInError() { return back.signInError; },
   /** 'link:steam' / 'link:discord' when "Confirm it's you" came back as the same account. */
   get afterSignIn() { return back.afterSignIn; },
   /** A Discord sign-in found a verified Steam that has its own account (Link Steam combines them). */
@@ -216,6 +245,7 @@ window.HTAccount = {
   noticeSeen: (id) => client.seen(id),
   undoNotice,
   signOut: () => client.signOut(),
+  signOutEverywhere,
   deleteAccount,
   /** Achievements, stats and time played in every House Tandem game: { dice: { earned: [{id, earnedAt}], stats } } */
   games: () => client.games(),

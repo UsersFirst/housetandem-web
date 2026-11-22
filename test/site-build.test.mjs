@@ -54,6 +54,61 @@ test('the policy allows each inline script and blocks framing', () => {
   for (const h of ['tandemonium', 'dice', 'coins']) assert.ok(connect.includes('https://' + h + '.housetandem.com'), h + ' achievements');
 });
 
+test('sign-in values leave the address before analytics, and the account page loads none', () => {
+  const out = temp();
+  build({ out });
+  for (const f of walk(out).filter((x) => x.endsWith('.html'))) {
+    const html = fs.readFileSync(f, 'utf8');
+    const analytics = html.indexOf('ht-analytics.js');
+    if (analytics < 0) continue;
+    const strip = html.indexOf('window.__htBack');
+    assert.ok(strip >= 0 && strip < analytics, path.relative(out, f));
+    assert.ok(strip < html.indexOf('</head>'), path.relative(out, f));
+  }
+  const account = fs.readFileSync(path.join(out, 'account.html'), 'utf8');
+  assert.ok(!account.includes('ht-analytics.js'));
+  assert.ok(account.includes('window.__htBack'));
+});
+
+function runStrip(href) {
+  const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const code = html.match(/<script>(\(function\(\)\{try\{var l=location[\s\S]*?)<\/script>/)[1];
+  const u = new URL(href);
+  const win = {};
+  let replaced = null;
+  new Function('location', 'history', 'window', code)(
+    { pathname: u.pathname, search: u.search, hash: u.hash },
+    { replaceState(_s, _t, url) { replaced = url; } },
+    win,
+  );
+  return { replaced, back: win.__htBack };
+}
+
+test('the head script takes ht_ values off the address and keeps everything else', () => {
+  const a = runStrip('https://housetandem.com/account.html?utm_source=x&ht_code=a.b#ht_result=id.code&keep=1');
+  assert.equal(a.replaced, '/account.html?utm_source=x#keep=1');
+  assert.equal(a.back.hash, '#ht_result=id.code&keep=1');
+  const b = runStrip('https://housetandem.com/?ht_code=a.b#section');
+  assert.equal(b.replaced, '/#section');
+  assert.equal(b.back, undefined);
+  assert.equal(runStrip('https://housetandem.com/about.html?x=1#games').replaced, null);
+});
+
+test('analytics events carry no ht_ values in their addresses', () => {
+  const code = fs.readFileSync(new URL('../js/ht-analytics.js', import.meta.url), 'utf8');
+  const noop = () => {};
+  const win = { HT_ANALYTICS: { key: 'k' }, localStorage: { getItem: () => null, setItem: noop, removeItem: noop } };
+  const doc = { readyState: 'complete', querySelectorAll: () => [], addEventListener: noop, createElement: () => ({}), head: { appendChild: noop } };
+  new Function('window', 'document', 'location', 'navigator', code)(win, doc, { search: '', origin: 'https://housetandem.com' }, {});
+  const out = win.HT.cleanEvent({
+    properties: { $current_url: 'https://housetandem.com/a?x=1&ht_code=s3cret#ht_auth=t0ken', $referrer: 'https://housetandem.com/', other: 'ht_kept' },
+    $set: { $initial_current_url: 'https://housetandem.com/?ht_code=s3cret' },
+  });
+  assert.ok(!JSON.stringify(out).includes('s3cret') && !JSON.stringify(out).includes('t0ken'));
+  assert.equal(out.properties.$current_url, 'https://housetandem.com/a?x=1');
+  assert.equal(out.properties.other, 'ht_kept');
+});
+
 test('staging has its own API, no analytics, and is not indexed', () => {
   const out = temp();
   const { csp } = build({ env: 'staging', out });
