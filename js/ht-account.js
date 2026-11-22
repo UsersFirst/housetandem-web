@@ -43,8 +43,7 @@ async function refresh() {
 
 // What a Discord sign-in asks for beyond name and picture (the Permissions switches on account.html):
 // join the House Tandem server, email for new game news, linked accounts for Steam achievements.
-// The same as the Permissions switches' starting state on the account page: email is off until ticked.
-let discordScopes = ['guilds.join', 'connections'];
+let discordScopes = ['guilds.join', 'email', 'connections'];
 const optsFor = (provider) => (provider === 'discord' ? { scopes: discordScopes.slice() } : {});
 function setDiscordScopes(list) {
   discordScopes = (list || []).slice();
