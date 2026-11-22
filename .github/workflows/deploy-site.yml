@@ -33,6 +33,15 @@ jobs:
         run: npx --yes wrangler@4.166.0 deploy --env staging
       - name: Check staging answers
         run: node tools/check-site.js https://housetandem-web-staging.pete-872.workers.dev
+      - name: Why the deploy failed
+        if: failure()
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          echo "token set: $([ -n "$CLOUDFLARE_API_TOKEN" ] && echo yes || echo no), length ${#CLOUDFLARE_API_TOKEN}"
+          curl -sS -m 15 -o verify.json -w 'token verify: HTTP %{http_code}\n' -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify || true
+          node -e 'try{const r=JSON.parse(require("fs").readFileSync("verify.json"));console.log(JSON.stringify({success:r.success,status:r.result&&r.result.status,errors:r.errors}))}catch(e){console.log("no answer")}'
+          grep -hiE 'cause|ECONN|ENOTFOUND|ETIMEDOUT|EAI_AGAIN|UND_ERR|certificate|invalid' "$HOME"/.config/.wrangler/logs/*.log 2>/dev/null | grep -vi 'authorization' | tail -12 | cut -c1-220 || true
 
   production:
     needs: staging
