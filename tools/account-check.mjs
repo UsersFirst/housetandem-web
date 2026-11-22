@@ -130,7 +130,7 @@ async function runAccount() {
   let o = await open({ width: 1280, height: 900 }, { signedIn: false });
   let v = await o.page.evaluate(() => ({ join: !document.getElementById('account-signin').hidden, profile: !document.getElementById('account-profile').hidden,
     href: document.getElementById('account-discord-btn').href, nav: document.getElementById('nav-account').textContent.trim() }));
-  ok(v.join && !v.profile && v.nav === 'Sign in', 'signed out: the Join card, and the nav says Sign in');
+  ok(v.join && !v.profile && v.nav === 'Sign in and join us', 'signed out: the Join card, and the nav says Sign in and join us');
   ok(v.href.startsWith('https://discord.com/oauth2/authorize'), 'the Discord button is Discord\'s own link once one is ready');
   ok(o.calls.some((c) => c.path === '/auth/discord/begin' && !c.authed && c.body.mode === 'redirect' && c.body.scopes.join() === 'guilds.join,email,connections' && c.body.return_to.endsWith('account.html')),
     'the sign-in asks for the three permissions and comes back here');

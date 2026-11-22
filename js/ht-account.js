@@ -144,7 +144,7 @@ async function deleteAccount(confirmWord) {
   return out;
 }
 
-// ── Nav: "Sign in", or the account's pictures ──
+// ── Nav: "Sign in and join us", or the account's pictures ──
 function renderNav() {
   const list = document.querySelector('.nav-links');
   if (!list) return;
@@ -159,7 +159,7 @@ function renderNav() {
   a.className = 'nav-account' + (/account\.html$/.test(location.pathname) ? ' active' : '');
   const user = client.user;
   if (!user || !client.token) {
-    a.textContent = 'Sign in';
+    a.textContent = 'Sign in and join us';
   } else {
     const pics = pictures(user);
     const discord = pics.filter((p) => p.provider !== 'steam')[0];

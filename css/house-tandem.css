@@ -96,7 +96,8 @@
 #games { padding-bottom: 5rem; }
 
 /* ===== Account (account.html + the nav's Sign in / pictures) ===== */
-.nav-account { display: inline-flex; align-items: center; gap: 0.45rem; }
+.nav-account { display: inline-flex; align-items: center; gap: 0.45rem; white-space: nowrap; }
+@media (min-width: 769px) and (max-width: 940px) { .nav-links { gap: 0.95rem; } .nav-links a { font-size: 0.82rem; } }   /* the longer "Sign in and join us" keeps clear of the logo */
 .nav-avatar { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--border-color); }
 .nav-avatar[data-provider="discord"] { box-shadow: 0 0 0 2px #5865f2; }
 .nav-avatar[data-provider="steam"] { box-shadow: 0 0 0 2px #66c0f4; }
