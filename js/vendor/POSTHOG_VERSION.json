@@ -1,0 +1,8 @@
+{
+  "package": "posthog-js",
+  "version": "1.453.2",
+  "file": "dist/array.js",
+  "sha256": "604395955c162b00400080b7d5b06c077ae88472e4e96c9e75500cca9fa00f75",
+  "license": "Apache-2.0 AND MIT",
+  "syncedAt": "2026-11-22"
+}

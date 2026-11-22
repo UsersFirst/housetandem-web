@@ -117,7 +117,9 @@
 
   var s = document.createElement('script');
   s.async = true;
-  s.src = HOST + '/static/array.js';
+  // The SDK is our own copy at a fixed version (js/vendor/POSTHOG_VERSION.json), not whatever the
+  // CDN serves today: this page's origin also holds the sign-in session.
+  s.src = '/js/vendor/posthog-array.js';
   s.onload = function () {
     if (!window.posthog || !window.posthog.init) return;
     window.posthog.init(cfg.key, Object.assign({
