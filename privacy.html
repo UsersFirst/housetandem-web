@@ -39,7 +39,7 @@
       <div class="legal-content fade-in">
 
         <h1>Privacy Policy</h1>
-        <p class="last-updated">Last updated: November 13, 2026</p>
+        <p class="last-updated">Last updated: November 22, 2026</p>
 
         <p>Users First, LLC, doing business as House Tandem ("we," "us," or "our"), operates the website housetandem.com and the games Tandemonium, 7, 11, Doubles, Roulette, Carnival Dozer and Timber Tandem. This policy explains what we collect and why. We don't sell your data.</p>
 
@@ -51,6 +51,13 @@
           <li><strong>IP addresses are not kept.</strong> Analytics requests pass through our own server (e.housetandem.com, hosted on Cloudflare) on their way to PostHog, and our PostHog project is set to discard IP addresses.</li>
           <li><strong>Links to our games and to Steam</strong> carry tags (such as <code>utm_source=housetandem</code>) so we can see which pages lead people to a game. Steam reports those tags back to us only as totals.</li>
         </ul>
+        <p>This website is served by Cloudflare, and we also use <a href="https://www.cloudflare.com/web-analytics/" target="_blank" rel="noopener">Cloudflare Web Analytics</a> to see how many people visit and how fast pages load.</p>
+        <ul>
+          <li><strong>No cookies, no stored identifiers.</strong> Cloudflare's measurement saves nothing in your browser and does not build a profile of you.</li>
+          <li><strong>What is recorded:</strong> the page address, the page that linked to it, how long the page took to load, and your browser, device type and country.</li>
+          <li><strong>The account page is left out.</strong> Our pages do not allow the measurement script to run on the <a href="account.html">account page</a>.</li>
+          <li><strong>Turning it off:</strong> the button and the Global Privacy Control signal described under "Opting out" apply to PostHog. Cloudflare's measurement is added by Cloudflare as it serves the page; a browser content blocker stops it.</li>
+        </ul>
 
         <h2>House Tandem account (Discord and Steam sign-in)</h2>
         <p>Signing in is optional. When you sign in with Discord on housetandem.com, you choose what we get under <strong>Permissions</strong> before Discord asks you to agree:</p>
@@ -60,15 +67,18 @@
           <li><strong>Your email</strong> (optional): Discord's verified email address, used only for news about new House Tandem games. We never sell it and we don't spam you. Sign in again with the email switch off, or contact us, and we remove it.</li>
           <li><strong>Your linked accounts</strong> (optional): if your Discord account has a Steam account linked that Discord has verified, we link that Steam account to your House Tandem account, so your Tandemonium rides and Steam achievements show in one place. We don't keep your other linked accounts.</li>
         </ul>
-        <p>Signing in with Steam gives us your Steam ID, name and picture. We never see your Discord messages or password, or your Steam password. We record which permissions you agreed to. Deleting your account on the <a href="account.html">account page</a> removes all of it, including your email.</p>
+        <p>Signing in with Steam gives us your Steam ID, name and picture. We never see your Discord messages or password, or your Steam password. We record which permissions you agreed to.</p>
+        <p>While you are signed in, your account keeps the things that follow you from device to device: your rides and best times, achievements, time played in each game, the people you have ridden with, and the sign-ins you have linked. Your browser keeps a sign-in token so you stay signed in for up to 30 days; <strong>Sign out everywhere</strong> on the account page ends every session at once.</p>
+        <p>Deleting your account on the <a href="account.html">account page</a> removes all of that, including your email. Play records that stay behind for our totals no longer carry your account, IP address or device ID.</p>
 
         <h2>Tandemonium</h2>
         <ul>
-          <li><strong>Game data:</strong> progress, achievements and settings are stored locally on your device.</li>
+          <li><strong>Game data:</strong> progress, achievements and settings are stored on your device. If you sign in, your rides, best times and achievements are also stored with your House Tandem account, and your best times and name appear on the leaderboards.</li>
           <li><strong>Gameplay analytics:</strong> to improve the game we record how it is played: session details (device type, screen size, input method and controller), ride results (level, completion, crashes, distance, frame rate), multiplayer connection quality, menu and tutorial steps, and clicks on links such as the Steam wishlist button. These records are tied to a random ID created on your device the first time you play, which lets us tell whether players come back. They are also stored with the IP address the request came from, which we use to filter out our own testing and to limit abuse. Analytics are stored in a Cloudflare database. We are moving gameplay analytics to PostHog; when we do, IP addresses will no longer be stored, and this page will be updated.</li>
-          <li><strong>Google Sign-In (optional):</strong> if you sign in, we receive your display name and profile picture for the leaderboard. We do not access your email, contacts or other Google account data.</li>
+          <li><strong>Google Sign-In (older accounts):</strong> if you sign in with Google, we receive your display name, profile picture and email address. The email address is kept only inside your sign-in session, where we use it to recognize our own staff accounts; it is not stored in our database. We do not access your contacts or other Google account data.</li>
+          <li><strong>Tourist mode:</strong> the addresses and places you type are sent to Google Maps to find the route and its scenery, under <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's privacy policy</a>.</li>
           <li><strong>Steam:</strong> the Steam version uses Steam for sign-in and achievements under <a href="https://store.steampowered.com/privacy_agreement/" target="_blank" rel="noopener">Steam's privacy policy</a>.</li>
-          <li><strong>Multiplayer:</strong> players connect directly to each other with WebRTC, or through our relay server when a direct connection isn't possible. Connection details (including IP addresses) pass through our servers to set up the connection and are not stored.</li>
+          <li><strong>Multiplayer:</strong> players connect through our relay server, or directly to each other with WebRTC. On a direct connection your partner's device can see your IP address. IP addresses pass through our servers to set up the connection and are not stored with the room. A room remembers, for up to a week, when it was last used and the name each rider gave, so that someone coming back to it can be told who was there.</li>
           <li><strong>Payments:</strong> handled by Stripe or Steam. We never see or store card details. See <a href="https://stripe.com/privacy" target="_blank" rel="noopener">stripe.com/privacy</a>.</li>
         </ul>
 
@@ -81,7 +91,7 @@
         <p>Players in the EU, EEA, UK and Switzerland will be asked before any game stores an analytics ID on their device.</p>
 
         <h2>Data sharing</h2>
-        <p>We do not sell or rent your information. We use these service providers to run our games, and they process data only on our behalf: Cloudflare (hosting, game servers and databases), PostHog (analytics, US servers), GitHub (website hosting), Google (optional sign-in), Stripe and Steam (payments).</p>
+        <p>We do not sell or rent your information. We use these service providers to run our games, and they process data only on our behalf: Cloudflare (website and game hosting, game servers, databases and visit counts), PostHog (analytics, US servers), Discord and Steam (sign-in), Google (sign-in for older accounts, and maps for Tourist mode), Stripe and Steam (payments).</p>
 
         <h2>Children's privacy</h2>
         <p>Our games are family-friendly. We do not knowingly collect personal information from children under 13. If you believe we have, contact us and we will delete it.</p>
@@ -91,7 +101,8 @@
           <li>Clear your local game data at any time by clearing your browser's site data</li>
           <li>Turn off analytics with the button above or with Global Privacy Control</li>
           <li>Revoke Google Sign-In access in your Google account settings</li>
-          <li>Remove House Tandem from Discord under User Settings › Authorized Apps, and delete your House Tandem account on the account page</li>
+          <li>Remove House Tandem from Discord under User Settings › Authorized Apps</li>
+          <li>End every signed-in session, or delete your House Tandem account, on the account page</li>
           <li>Contact us to access or delete leaderboard or analytics data associated with you</li>
         </ul>
 

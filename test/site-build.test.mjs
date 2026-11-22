@@ -54,6 +54,21 @@ test('the policy allows each inline script and blocks framing', () => {
   for (const h of ['tandemonium', 'dice', 'coins']) assert.ok(connect.includes('https://' + h + '.housetandem.com'), h + ' achievements');
 });
 
+test('Cloudflare Web Analytics: its two hosts on production pages only, never on the account page or on staging', () => {
+  const prod = build({ out: temp() });
+  const dir = (csp, name) => csp.split('; ').find((d) => d.startsWith(name));
+  assert.ok(dir(prod.csp, 'script-src').includes('https://static.cloudflareinsights.com'));
+  assert.ok(dir(prod.csp, 'connect-src').split(' ').includes('https://cloudflareinsights.com'));
+  assert.ok(!prod.accountCsp.includes('cloudflareinsights'));
+  const headers = fs.readFileSync(path.join(prod.out, '_headers'), 'utf8');
+  const account = headers.split('/account*')[1];
+  assert.ok(account && account.includes('Content-Security-Policy: default-src') && !account.includes('cloudflareinsights'));
+  assert.ok(account.includes("frame-ancestors 'none'"), 'a whole policy, so it stands alone if it replaces the first');
+  const staging = build({ env: 'staging', out: temp() });
+  assert.ok(!staging.csp.includes('cloudflareinsights'));
+  assert.ok(!fs.readFileSync(path.join(staging.out, '_headers'), 'utf8').includes('/account*'));
+});
+
 test('sign-in values leave the address before analytics, and the account page loads none', () => {
   const out = temp();
   build({ out });
