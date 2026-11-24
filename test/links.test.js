@@ -3,9 +3,18 @@ const assert = require('node:assert');
 const { targetUrl, page, PASS_THROUGH } = require('../tools/build-links.js');
 const { links } = require('../tools/links.json');
 
-test('bio links carry source, medium and the slug as campaign', () => {
-  assert.strictEqual(targetUrl('tt', links.tt), '/account.html?utm_source=tiktok&utm_medium=bio&utm_campaign=tt');
-  assert.strictEqual(targetUrl('yt', links.yt), '/account.html?utm_source=youtube&utm_medium=shorts&utm_campaign=yt');
+test('bio links land on /join, tagged with their platform and the join campaign', () => {
+  for (const [slug, source] of [['tt', 'tiktok'], ['ig', 'instagram'], ['yt', 'youtube'], ['x', 'x']]) {
+    assert.strictEqual(targetUrl(slug, links[slug]), `/join?utm_source=${source}&utm_medium=bio&utm_campaign=join`);
+  }
+});
+
+test('the slug is the campaign when a link sets none', () => {
+  assert.match(targetUrl('dc', links.dc), /utm_campaign=dc/);
+});
+
+test('/playtest uses the never-expiring invite, the same as /discord', () => {
+  assert.strictEqual(links.playtest.to, links.discord.to);
 });
 
 test('an explicit campaign wins over the slug', () => {
@@ -14,7 +23,7 @@ test('an explicit campaign wins over the slug', () => {
 
 test('redirect page works without JS and is not indexed', () => {
   const html = page('ig', links.ig);
-  assert.match(html, /http-equiv="refresh" content="0; url=\/account\.html\?utm_source=instagram/);
+  assert.match(html, /http-equiv="refresh" content="0; url=\/join\?utm_source=instagram/);
   assert.match(html, /name="robots" content="noindex"/);
 });
 
