@@ -85,6 +85,16 @@ test('sign-in values leave the address before analytics, and the account page lo
   assert.ok(account.includes('window.__htBack'));
 });
 
+test('/join, where the bio links land, counts visits and has no sign-in code', () => {
+  const out = temp();
+  build({ out });
+  const join = fs.readFileSync(path.join(out, 'join.html'), 'utf8');
+  assert.ok(join.includes('js/ht-analytics.js'));
+  assert.ok(!/src="[^"]*(ht-account|account-page|lib\/identity)/.test(join));
+  assert.match(join, /href="\/discord"[^>]*data-ht="discord:join"/);
+  assert.match(join, /href="https:\/\/store\.steampowered\.com\/app\/4482940\/"[^>]*data-ht="playtest:join"/);
+});
+
 function runStrip(href) {
   const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const code = html.match(/<script>(\(function\(\)\{try\{var l=location[\s\S]*?)<\/script>/)[1];

@@ -5,7 +5,7 @@
 const base = (process.argv[2] || '').replace(/\/$/, '');
 const waitArg = process.argv.indexOf('--wait');
 const waitS = waitArg > 0 ? Number(process.argv[waitArg + 1]) || 0 : 0;
-const OK = ['/', '/about', '/account', '/privacy', '/tos', '/support', '/press', '/tandemonium/', '/tt/', '/js/ht-account.js', '/css/style.css'];
+const OK = ['/', '/about', '/account', '/join', '/privacy', '/tos', '/support', '/press', '/tandemonium/', '/tt/', '/js/ht-account.js', '/css/style.css'];
 const GONE = ['/package.json', '/README.md', '/tools/links.json', '/docs/analytics-and-promotion-plan.md', '/wrangler.jsonc'];
 const HEADERS = ['content-security-policy', 'x-content-type-options', 'x-frame-options', 'referrer-policy', 'strict-transport-security'];
 

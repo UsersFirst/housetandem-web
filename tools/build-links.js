@@ -7,7 +7,7 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 // Top-level names a slug must never overwrite.
-const RESERVED = new Set(['account', 'css', 'js', 'images', 'tools', 'docs', 'workers', 'tandemonium', 'node_modules', 'test']);
+const RESERVED = new Set(['account', 'join', 'css', 'js', 'images', 'tools', 'docs', 'workers', 'tandemonium', 'node_modules', 'test']);
 
 function targetUrl(slug, link) {
   // An outside address (the Discord invite) goes as it is, without UTM tags.
