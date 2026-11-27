@@ -83,6 +83,11 @@ test('sign-in values leave the address before analytics, and the account page lo
   const account = fs.readFileSync(path.join(out, 'account.html'), 'utf8');
   assert.ok(!account.includes('ht-analytics.js'));
   assert.ok(account.includes('window.__htBack'));
+  // The delete page: its one-time ticket (#ht_erase) leaves the address first, and it loads no analytics.
+  // Its address starts /account, so it gets the account page's policy (no visit counter) too.
+  const erase = fs.readFileSync(path.join(out, 'account-delete.html'), 'utf8');
+  assert.ok(!erase.includes('ht-analytics.js'));
+  assert.ok(erase.indexOf('window.__htBack') < erase.indexOf('js/account-delete.js'));
 });
 
 test('/join, where the bio links land, counts visits and has no sign-in code', () => {

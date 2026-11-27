@@ -625,6 +625,8 @@
     var final = $('delete-final');
     $('account-delete').addEventListener('click', function () {
       var ids = (A.user && A.user.identities) || {};
+      // Steam and Discord on one account: each is confirmed on the delete page, not by this one session.
+      if (ids.steam && ids.discord) { location.href = 'account-delete.html'; return; }
       var names = ['discord', 'steam'].filter(function (p) { return ids[p]; }).map(function (p) { return p === 'discord' ? 'Discord' : 'Steam'; });
       $('delete-signins').textContent = names.length ? names.join(' and ') : 'all of them';
       $('delete-rides').textContent = lastMe ? $('stat-rides').textContent + ' rides' : 'all';
